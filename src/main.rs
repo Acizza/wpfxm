@@ -75,9 +75,10 @@ fn manage_new_game(config: &Config, args: &clap::ArgMatches) -> Result<(), Error
     }
 
     let pfx_path = config.base_directory.join(pfx_name);
+    let arch = prefix::detect_arch(&pfx_path)?;
 
     let mut detected_games = {
-        let mut paths = prefix::detect_unique_paths(&pfx_path);
+        let mut paths = prefix::detect_unique_paths(&pfx_path, arch);
         prefix::strip_base_paths(&pfx_path, &mut paths);
         paths
     };
@@ -97,7 +98,7 @@ fn manage_new_game(config: &Config, args: &clap::ArgMatches) -> Result<(), Error
         game_path.to_string_lossy()
     ));
 
-    let prefix = Prefix::new(pfx_name, game_path);
+    let prefix = Prefix::new(pfx_name, game_path, arch);
     prefix.save()?;
 
     Ok(())

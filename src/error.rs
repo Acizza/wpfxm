@@ -69,4 +69,7 @@ pub enum PrefixError {
 
     #[fail(display = "failed to write prefix config to file")]
     FailedToWriteConfig(#[cause] std::io::Error),
+
+    #[fail(display = "failed to detect prefix architecture")]
+    FailedToDetectArch,
 }

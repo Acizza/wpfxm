@@ -1,8 +1,10 @@
 use crate::error::PrefixError;
+use crate::log::{self, ErrorSeverity};
 use crate::util::dir;
 use serde_derive::{Deserialize, Serialize};
 use std::borrow::Cow;
-use std::fs;
+use std::fs::{self, File};
+use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 
 const DEFAULT_ROOT_FOLDERS: [&str; 6] = [
@@ -56,7 +58,7 @@ fn detect_dir_diff(path: &Path, exclude_paths: &[&str], results: &mut Vec<PathBu
     }
 }
 
-pub fn detect_unique_paths<P>(pfx: P) -> Vec<PathBuf>
+pub fn detect_unique_paths<P>(pfx: P, arch: PrefixArch) -> Vec<PathBuf>
 where
     P: Into<PathBuf>,
 {
@@ -69,11 +71,14 @@ where
         &DEFAULT_PROGRAM_FILES,
         &mut paths,
     );
-    detect_dir_diff(
-        &pfx.clone().join("Program Files (x86)"),
-        &DEFAULT_PROGRAM_FILES,
-        &mut paths,
-    );
+
+    if arch != PrefixArch::Win32 {
+        detect_dir_diff(
+            &pfx.clone().join("Program Files (x86)"),
+            &DEFAULT_PROGRAM_FILES,
+            &mut paths,
+        );
+    }
 
     paths
 }
@@ -91,15 +96,82 @@ where
     }
 }
 
+#[derive(Debug, PartialEq, Serialize, Deserialize, Copy, Clone)]
+pub enum PrefixArch {
+    Win32,
+    Win64,
+}
+
+impl PrefixArch {
+    fn extract_from_reg_file(file: &File) -> Option<PrefixArch> {
+        const ARCH_STR: &str = "#arch=";
+        let reader = BufReader::new(file);
+
+        for line in reader.lines() {
+            let line = match line {
+                Ok(line) => line,
+                Err(_) => continue,
+            };
+
+            if !line.contains(ARCH_STR) {
+                continue;
+            }
+
+            match line.splitn(2, ARCH_STR).nth(1) {
+                Some("win32") => return Some(PrefixArch::Win32),
+                Some("win64") => return Some(PrefixArch::Win64),
+                _ => (),
+            }
+        }
+
+        None
+    }
+}
+
+pub fn detect_arch<P>(path: P) -> Result<PrefixArch, PrefixError>
+where
+    P: AsRef<Path>,
+{
+    // These files contain the prefix architecture, and are sorted in increasing order of
+    // size incase one file doesn't have the line we're looking for
+    const FILES: [&str; 3] = ["userdef.reg", "user.reg", "system.reg"];
+    let mut arch = None;
+
+    for fname in &FILES {
+        let path = path.as_ref().join(fname);
+
+        let file = match File::open(path) {
+            Ok(f) => f,
+            Err(err) => {
+                log::error(ErrorSeverity::Warning, err);
+                continue;
+            }
+        };
+
+        if let Some(detected) = PrefixArch::extract_from_reg_file(&file) {
+            arch = Some(detected);
+            break;
+        }
+    }
+
+    let arch = match arch {
+        Some(arch) => arch,
+        None => return Err(PrefixError::FailedToDetectArch),
+    };
+
+    Ok(arch)
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Prefix {
     #[serde(skip)]
     pub name: String,
     pub game_path: PathBuf,
+    pub arch: PrefixArch,
 }
 
 impl Prefix {
-    pub fn new<S, P>(name: S, game_path: P) -> Prefix
+    pub fn new<S, P>(name: S, game_path: P, arch: PrefixArch) -> Prefix
     where
         S: Into<String>,
         P: Into<PathBuf>,
@@ -107,6 +179,7 @@ impl Prefix {
         Prefix {
             name: name.into(),
             game_path: game_path.into(),
+            arch,
         }
     }
 
