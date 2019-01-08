@@ -2,7 +2,7 @@ use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
 
-fn build_valid_dir<P>(base: P) -> Option<PathBuf>
+fn build_dir<P>(base: P) -> Option<PathBuf>
 where
     P: AsRef<Path>,
 {
@@ -15,10 +15,10 @@ where
     Some(dir)
 }
 
-pub fn get_valid_config_dir() -> Option<PathBuf> {
-    build_valid_dir(dirs::config_dir()?)
+pub fn get_config_dir() -> Option<PathBuf> {
+    build_dir(dirs::config_dir()?)
 }
 
-pub fn get_valid_data_dir() -> Option<PathBuf> {
-    build_valid_dir(dirs::data_local_dir()?)
+pub fn get_data_dir() -> Option<PathBuf> {
+    build_dir(dirs::data_local_dir()?)
 }

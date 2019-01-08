@@ -211,7 +211,7 @@ impl Prefix {
     where
         S: AsRef<str>,
     {
-        let mut dir = dir::get_valid_data_dir().ok_or(PrefixError::FailedToGetDataDir)?;
+        let mut dir = dir::get_data_dir().ok_or(PrefixError::FailedToGetDataDir)?;
         dir.push(name.as_ref());
         Ok(dir)
     }

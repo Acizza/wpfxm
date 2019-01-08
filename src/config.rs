@@ -39,7 +39,7 @@ impl Config {
     }
 
     pub fn get_path() -> Result<PathBuf, ConfigError> {
-        let mut path = dir::get_valid_config_dir().ok_or(ConfigError::FailedToGetConfigDir)?;
+        let mut path = dir::get_config_dir().ok_or(ConfigError::FailedToGetConfigDir)?;
         path.push(Config::DEFAULT_FILENAME);
         Ok(path)
     }
