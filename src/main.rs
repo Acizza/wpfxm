@@ -91,7 +91,11 @@ fn manage_new_game(config: &Config, args: &clap::ArgMatches) -> Result<(), Error
         }
     };
 
-    println!("game: {:?}", game_path);
+    log::info(format!(
+        "detected game in \"{}\" prefix at \"{}\"",
+        pfx_name,
+        game_path.to_string_lossy()
+    ));
 
     let prefix = Prefix::new(pfx_name, game_path);
     prefix.save()?;
