@@ -20,8 +20,8 @@ pub enum Error {
     #[fail(display = "prefix error")]
     Prefix(#[cause] PrefixError),
 
-    #[fail(display = "{} prefix already exists", _0)]
-    PrefixAlreadyExists(String),
+    #[fail(display = "{} prefix is already being managed", _0)]
+    PrefixAlreadyManaged(String),
 
     #[fail(display = "no games detected in prefix {}", _0)]
     NoGamesDetected(String),

@@ -70,7 +70,7 @@ fn manage_new_game(config: &Config, args: &clap::ArgMatches) -> Result<(), Error
 
     if let Ok(path) = Prefix::get_data_path(pfx_name) {
         if path.exists() {
-            return Err(Error::PrefixAlreadyExists(pfx_name.into()));
+            return Err(Error::PrefixAlreadyManaged(pfx_name.into()));
         }
     }
 
