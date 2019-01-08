@@ -1,9 +1,12 @@
 mod config;
 mod error;
+mod log;
 mod prefix;
 mod util;
 
 use crate::config::Config;
+use crate::error::Error;
+use crate::log::ErrorSeverity;
 use crate::prefix::Prefix;
 
 fn main() {
@@ -22,18 +25,31 @@ fn main() {
     .setting(AppSettings::SubcommandRequired)
     .get_matches();
 
+    match run(&args) {
+        Ok(_) => (),
+        Err(err) => {
+            log::error(ErrorSeverity::Fatal, err);
+            std::process::exit(1);
+        }
+    }
+}
+
+fn run(args: &clap::ArgMatches) -> Result<(), Error> {
     let config = match Config::load(args.value_of("CONFIG")) {
         Ok(config) => config,
         Err(err) => {
-            eprintln!("err: failed to load existing config: {}", err);
+            log::error(ErrorSeverity::Warning, err);
 
             let default = Config::default();
 
             match default.save() {
                 Ok(save_path) => {
-                    println!("info: new config saved to {}", save_path.to_string_lossy())
+                    log::info(format!(
+                        "new config saved to {}",
+                        save_path.to_string_lossy()
+                    ));
                 }
-                Err(err) => eprintln!("err: failed to save new config: {}", err),
+                Err(err) => log::error(ErrorSeverity::Warning, err),
             }
 
             default
@@ -46,7 +62,7 @@ fn main() {
     }
 }
 
-fn manage_new_game(config: &Config, args: &clap::ArgMatches) {
+fn manage_new_game(config: &Config, args: &clap::ArgMatches) -> Result<(), Error> {
     let pfx_name = args
         .value_of("PREFIX")
         .or_else(|| args.value_of("NAME"))
@@ -54,8 +70,7 @@ fn manage_new_game(config: &Config, args: &clap::ArgMatches) {
 
     if let Ok(path) = Prefix::get_data_path(pfx_name) {
         if path.exists() {
-            eprintln!("{} prefix already exists! ignoring", pfx_name);
-            return;
+            return Err(Error::PrefixAlreadyExists(pfx_name.into()));
         }
     }
 
@@ -68,10 +83,7 @@ fn manage_new_game(config: &Config, args: &clap::ArgMatches) {
     };
 
     let game_path = match detected_games.len() {
-        0 => {
-            eprintln!("no games detected in prefix {}", pfx_name);
-            return;
-        }
+        0 => return Err(Error::NoGamesDetected(pfx_name.into())),
         1 => detected_games.swap_remove(0),
         _ => {
             println!("multiple games detected!");
@@ -82,5 +94,7 @@ fn manage_new_game(config: &Config, args: &clap::ArgMatches) {
     println!("game: {:?}", game_path);
 
     let prefix = Prefix::new(pfx_name, game_path);
-    prefix.save().unwrap();
+    prefix.save()?;
+
+    Ok(())
 }

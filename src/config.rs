@@ -31,7 +31,9 @@ impl Config {
     pub fn save(&self) -> Result<PathBuf, ConfigError> {
         let path = Config::get_path()?;
         let toml = toml::to_string_pretty(self).map_err(ConfigError::FailedToSerialize)?;
-        fs::write(&path, toml).map_err(ConfigError::FailedToWrite)?;
+
+        fs::write(&path, toml)
+            .map_err(|err| ConfigError::FailedToWrite(err, path.to_string_lossy().to_string()))?;
 
         Ok(path)
     }

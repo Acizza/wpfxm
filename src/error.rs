@@ -1,21 +1,53 @@
 use failure::Fail;
 
+macro_rules! impl_err_conv {
+    ($struct:ident, $($from:ty => $to:ident,)+) => {
+        $(
+        impl From<$from> for $struct {
+            fn from(f: $from) -> $struct {
+                $struct::$to(f)
+            }
+        }
+        )+
+    };
+}
+
+#[derive(Fail, Debug)]
+pub enum Error {
+    #[fail(display = "config error")]
+    Config(#[cause] ConfigError),
+
+    #[fail(display = "prefix error")]
+    Prefix(#[cause] PrefixError),
+
+    #[fail(display = "{} prefix already exists", _0)]
+    PrefixAlreadyExists(String),
+
+    #[fail(display = "no games detected in prefix {}", _0)]
+    NoGamesDetected(String),
+}
+
+impl_err_conv!(Error,
+    ConfigError => Config,
+    PrefixError => Prefix,
+);
+
 #[derive(Fail, Debug)]
 pub enum ConfigError {
     #[fail(display = "failed to get config directory")]
     FailedToGetConfigDir,
-    
+
     #[fail(display = "failed to read config file")]
     FailedToRead(#[cause] std::io::Error),
-    
+
     #[fail(display = "failed to parse config file")]
     FailedToParse(#[cause] toml::de::Error),
-    
+
     #[fail(display = "failed to serialize config")]
     FailedToSerialize(#[cause] toml::ser::Error),
 
-    #[fail(display = "failed to write config to file")]
-    FailedToWrite(#[cause] std::io::Error),
+    #[fail(display = "failed to write config to {}", _1)]
+    FailedToWrite(#[cause] std::io::Error, String),
 
     #[fail(display = "failed to create config dir")]
     FailedToCreateConfigDir(#[cause] std::io::Error),
