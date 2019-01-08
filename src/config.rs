@@ -1,4 +1,5 @@
 use crate::error::ConfigError;
+use crate::util::dir;
 use serde_derive::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
@@ -36,15 +37,7 @@ impl Config {
     }
 
     pub fn get_path() -> Result<PathBuf, ConfigError> {
-        let mut path = match get_app_config_dir() {
-            Some(path) => path,
-            None => return Err(ConfigError::FailedToGetConfigDir),
-        };
-
-        if !path.exists() {
-            fs::create_dir_all(&path).map_err(ConfigError::FailedToCreateConfigDir)?;
-        }
-
+        let mut path = dir::get_valid_config_dir().ok_or(ConfigError::FailedToGetConfigDir)?;
         path.push(Config::DEFAULT_FILENAME);
         Ok(path)
     }
@@ -62,8 +55,4 @@ fn default_base_directory() -> PathBuf {
     dirs::home_dir()
         .map(|hd| hd.join("wine"))
         .unwrap_or_else(|| PathBuf::from("~/wine"))
-}
-
-fn get_app_config_dir() -> Option<PathBuf> {
-    dirs::config_dir().map(|cd| cd.join(env!("CARGO_PKG_NAME")))
 }

@@ -1,8 +1,10 @@
 mod config;
 mod error;
 mod prefix;
+mod util;
 
 use crate::config::Config;
+use crate::prefix::Prefix;
 
 fn main() {
     use clap::{clap_app, AppSettings};
@@ -45,20 +47,40 @@ fn main() {
 }
 
 fn manage_new_game(config: &Config, args: &clap::ArgMatches) {
-    let pfx = {
-        let pfx_name = args
-            .value_of("PREFIX")
-            .or_else(|| args.value_of("NAME"))
-            .unwrap();
+    let pfx_name = args
+        .value_of("PREFIX")
+        .or_else(|| args.value_of("NAME"))
+        .unwrap();
 
-        config.base_directory.join(pfx_name)
-    };
+    if let Ok(path) = Prefix::get_data_path(pfx_name) {
+        if path.exists() {
+            eprintln!("{} prefix already exists! ignoring", pfx_name);
+            return;
+        }
+    }
 
-    let detected_games = {
-        let mut paths = prefix::detect_unique_paths(&pfx);
-        prefix::strip_base_paths(&pfx, &mut paths);
+    let pfx_path = config.base_directory.join(pfx_name);
+
+    let mut detected_games = {
+        let mut paths = prefix::detect_unique_paths(&pfx_path);
+        prefix::strip_base_paths(&pfx_path, &mut paths);
         paths
     };
 
-    println!("{:?}", detected_games);
+    let game_path = match detected_games.len() {
+        0 => {
+            eprintln!("no games detected in prefix {}", pfx_name);
+            return;
+        }
+        1 => detected_games.swap_remove(0),
+        _ => {
+            println!("multiple games detected!");
+            unimplemented!()
+        }
+    };
+
+    println!("game: {:?}", game_path);
+
+    let prefix = Prefix::new(pfx_name, game_path);
+    prefix.save().unwrap();
 }

@@ -1,3 +1,7 @@
+use crate::error::PrefixError;
+use crate::util::dir;
+use serde_derive::{Deserialize, Serialize};
+use std::borrow::Cow;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -84,5 +88,58 @@ where
         if let Ok(stripped) = path.strip_prefix(&base) {
             *path = PathBuf::from(stripped);
         }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Prefix {
+    #[serde(skip)]
+    pub name: String,
+    pub game_path: PathBuf,
+}
+
+impl Prefix {
+    pub fn new<S, P>(name: S, game_path: P) -> Prefix
+    where
+        S: Into<String>,
+        P: Into<PathBuf>,
+    {
+        Prefix {
+            name: name.into(),
+            game_path: game_path.into(),
+        }
+    }
+
+    pub fn load<'a, S>(name: S) -> Result<Prefix, PrefixError>
+    where
+        S: Into<Cow<'a, str>>,
+    {
+        let name = name.into();
+
+        let path = Prefix::get_data_path(&name)?;
+        let contents = fs::read_to_string(&path).map_err(PrefixError::FailedToReadConfig)?;
+
+        let mut prefix: Prefix =
+            toml::from_str(&contents).map_err(PrefixError::FailedToParseConfig)?;
+        prefix.name = name.to_string();
+
+        Ok(prefix)
+    }
+
+    pub fn save(&self) -> Result<(), PrefixError> {
+        let path = Prefix::get_data_path(&self.name)?;
+        let toml = toml::to_string_pretty(self).map_err(PrefixError::FailedToSerializeConfig)?;
+
+        fs::write(path, toml).map_err(PrefixError::FailedToWriteConfig)?;
+        Ok(())
+    }
+
+    pub fn get_data_path<S>(name: S) -> Result<PathBuf, PrefixError>
+    where
+        S: AsRef<str>,
+    {
+        let mut dir = dir::get_valid_data_dir().ok_or(PrefixError::FailedToGetDataDir)?;
+        dir.push(name.as_ref());
+        Ok(dir)
     }
 }
