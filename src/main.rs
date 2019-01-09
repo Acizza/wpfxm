@@ -78,8 +78,8 @@ fn manage_new_game(config: &Config, args: &clap::ArgMatches) -> Result<(), Error
     let arch = prefix::detect_arch(&pfx_path)?;
 
     let mut detected_games = {
-        let mut paths = prefix::detect_unique_paths(&pfx_path, arch);
-        prefix::strip_base_paths(&pfx_path, &mut paths);
+        let mut paths = prefix::scan::unique_paths(&pfx_path, arch);
+        prefix::scan::strip_base_paths(&pfx_path, &mut paths);
         paths
     };
 
