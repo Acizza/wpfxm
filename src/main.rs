@@ -100,6 +100,7 @@ fn manage_new_game(config: &Config, args: &clap::ArgMatches) -> Result<(), Error
 
     let prefix = Prefix::new(pfx_name, game_path, arch);
     prefix.save()?;
+    prefix.run_hooks(config, &config.setup_hooks);
 
     Ok(())
 }

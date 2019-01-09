@@ -4,10 +4,14 @@ use serde_derive::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
+pub type Filename = String;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     #[serde(default = "default_base_directory")]
     pub base_directory: PathBuf,
+    #[serde(default)]
+    pub setup_hooks: Vec<Filename>,
 }
 
 impl Config {
@@ -49,6 +53,7 @@ impl Default for Config {
     fn default() -> Config {
         Config {
             base_directory: default_base_directory(),
+            setup_hooks: Vec::new(),
         }
     }
 }

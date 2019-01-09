@@ -19,6 +19,16 @@ pub fn get_config_dir() -> Option<PathBuf> {
     build_dir(dirs::config_dir()?)
 }
 
+pub fn get_hooks_dir() -> Option<PathBuf> {
+    let dir = get_config_dir().map(|dir| dir.join("hooks"))?;
+
+    if !dir.exists() {
+        fs::create_dir_all(&dir).ok()?;
+    }
+
+    Some(dir)
+}
+
 pub fn get_data_dir() -> Option<PathBuf> {
     build_dir(dirs::data_local_dir()?)
 }

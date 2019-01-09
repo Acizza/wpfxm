@@ -48,15 +48,15 @@ pub enum ConfigError {
 
     #[fail(display = "failed to write config to {}", _1)]
     FailedToWrite(#[cause] std::io::Error, String),
-
-    #[fail(display = "failed to create config dir")]
-    FailedToCreateConfigDir(#[cause] std::io::Error),
 }
 
 #[derive(Fail, Debug)]
 pub enum PrefixError {
     #[fail(display = "failed to get local data directory")]
     FailedToGetDataDir,
+
+    #[fail(display = "failed to get hooks directory")]
+    FailedToGetHooksDir,
 
     #[fail(display = "failed to read prefix configuration")]
     FailedToReadConfig(#[cause] std::io::Error),
@@ -72,4 +72,7 @@ pub enum PrefixError {
 
     #[fail(display = "failed to detect prefix architecture")]
     FailedToDetectArch,
+
+    #[fail(display = "hook failed to execute")]
+    FailedToRunHook,
 }

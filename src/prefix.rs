@@ -1,11 +1,14 @@
+use crate::config::Config;
 use crate::error::PrefixError;
 use crate::log::{self, ErrorSeverity};
 use crate::util::dir;
 use serde_derive::{Deserialize, Serialize};
 use std::borrow::Cow;
+use std::ffi::OsStr;
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
 const DEFAULT_ROOT_FOLDERS: [&str; 6] = [
     "Program Files",
@@ -128,6 +131,15 @@ impl PrefixArch {
     }
 }
 
+impl<'a> Into<&'a str> for PrefixArch {
+    fn into(self) -> &'a str {
+        match self {
+            PrefixArch::Win32 => "win32",
+            PrefixArch::Win64 => "win64",
+        }
+    }
+}
+
 pub fn detect_arch<P>(path: P) -> Result<PrefixArch, PrefixError>
 where
     P: AsRef<Path>,
@@ -214,5 +226,70 @@ impl Prefix {
         let mut dir = dir::get_data_dir().ok_or(PrefixError::FailedToGetDataDir)?;
         dir.push(name.as_ref());
         Ok(dir)
+    }
+
+    pub fn attach_cmd_to_prefix(&self, config: &Config, cmd: &mut Command) {
+        let abs_path = config.base_directory.join(&self.name);
+
+        cmd.env("WINEPREFIX", &abs_path)
+            .env("WINEARCH", OsStr::new(self.arch.into()))
+            .env("WPFXM_PFX_NAME", &self.name);
+
+        cmd.current_dir(abs_path.join("drive_c"));
+    }
+
+    pub fn run_hook<S>(&self, name: S, config: &Config) -> Result<(), PrefixError>
+    where
+        S: AsRef<str>,
+    {
+        log::info(format!("running hook {}", name.as_ref()));
+
+        let hook = Hook::create(name)?;
+        let mut cmd = hook.build_run_cmd(config, self);
+
+        let exit_code = cmd.status().ok().and_then(|s| s.code()).unwrap_or(0);
+
+        if exit_code != 0 {
+            return Err(PrefixError::FailedToRunHook);
+        }
+
+        Ok(())
+    }
+
+    pub fn run_hooks(&self, config: &Config, hooks: &[String]) {
+        for hook_name in hooks {
+            match self.run_hook(hook_name, config) {
+                Ok(_) => (),
+                Err(err) => log::error(ErrorSeverity::Warning, err),
+            }
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct Hook {
+    pub path: PathBuf,
+}
+
+impl Hook {
+    pub fn create<S>(name: S) -> Result<Hook, PrefixError>
+    where
+        S: AsRef<str>,
+    {
+        let mut path = dir::get_hooks_dir()
+            .ok_or(PrefixError::FailedToGetHooksDir)?
+            .join(name.as_ref());
+
+        path.set_extension("sh");
+
+        Ok(Hook { path })
+    }
+
+    pub fn build_run_cmd(&self, config: &Config, prefix: &Prefix) -> Command {
+        let mut cmd = Command::new("bash");
+        cmd.arg(&self.path);
+        prefix.attach_cmd_to_prefix(config, &mut cmd);
+
+        cmd
     }
 }
