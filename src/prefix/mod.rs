@@ -151,12 +151,10 @@ impl Prefix {
         cmd.current_dir(abs_path.join("drive_c"));
     }
 
-    pub fn run_hook<S>(&self, name: S, config: &Config) -> Result<(), PrefixError>
+    fn run_hook_silent<S>(&self, name: S, config: &Config) -> Result<(), PrefixError>
     where
         S: AsRef<str>,
     {
-        display::info(format!("running hook {}", name.as_ref()));
-
         let hook = Hook::create(name)?;
         let mut cmd = hook.build_run_cmd(config, self);
 
@@ -169,9 +167,19 @@ impl Prefix {
         Ok(())
     }
 
+    pub fn run_hook<S>(&self, name: S, config: &Config) -> Result<(), PrefixError>
+    where
+        S: AsRef<str>,
+    {
+        display::hook(format!("running {}", name.as_ref()));
+        self.run_hook_silent(name, config)
+    }
+
     pub fn run_hooks(&self, config: &Config, hooks: &[String]) {
-        for hook_name in hooks {
-            match self.run_hook(hook_name, config) {
+        for (i, hook_name) in hooks.iter().enumerate() {
+            display::hook(format!("running {} [{}/{}]", hook_name, 1 + i, hooks.len()));
+
+            match self.run_hook_silent(hook_name, config) {
                 Ok(_) => (),
                 Err(err) => display::error(ErrorSeverity::Warning, err),
             }

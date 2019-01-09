@@ -47,3 +47,10 @@ where
 {
     println!("input: {}", msg.as_ref());
 }
+
+pub fn hook<S>(msg: S)
+where
+    S: AsRef<str>,
+{
+    println!("hook: {}", msg.as_ref());
+}
