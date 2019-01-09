@@ -94,21 +94,10 @@ pub struct Prefix {
     pub name: String,
     pub game_path: PathBuf,
     pub arch: PrefixArch,
+    pub force_run_x86: bool,
 }
 
 impl Prefix {
-    pub fn new<S, P>(name: S, game_path: P, arch: PrefixArch) -> Prefix
-    where
-        S: Into<String>,
-        P: Into<PathBuf>,
-    {
-        Prefix {
-            name: name.into(),
-            game_path: game_path.into(),
-            arch,
-        }
-    }
-
     pub fn load<'a, S>(name: S) -> Result<Prefix, PrefixError>
     where
         S: Into<Cow<'a, str>>,
@@ -194,14 +183,23 @@ impl Prefix {
         }
     }
 
-    pub fn launch_process<P>(&self, config: &Config, relative_path: P) -> io::Result<Child>
+    pub fn launch_process<P>(
+        &self,
+        config: &Config,
+        relative_path: P,
+        opts: LaunchOptions,
+    ) -> io::Result<Child>
     where
         P: AsRef<Path>,
     {
         let mut cmd = {
-            let wine_process = match self.arch {
-                PrefixArch::Win32 => "wine",
-                PrefixArch::Win64 => "wine64",
+            let wine_process = if opts.force_run_x86 {
+                "wine"
+            } else {
+                match self.arch {
+                    PrefixArch::Win32 => "wine",
+                    PrefixArch::Win64 => "wine64",
+                }
             };
 
             Command::new(wine_process)
@@ -221,6 +219,11 @@ impl Prefix {
 
         cmd.spawn()
     }
+}
+
+#[derive(Debug, Serialize, Deserialize, Copy, Clone)]
+pub struct LaunchOptions {
+    pub force_run_x86: bool,
 }
 
 #[derive(Debug)]

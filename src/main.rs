@@ -8,7 +8,7 @@ mod util;
 use crate::config::Config;
 use crate::display::ErrorSeverity;
 use crate::error::{Error, PrefixError};
-use crate::prefix::{Prefix, PrefixArch};
+use crate::prefix::{LaunchOptions, Prefix, PrefixArch};
 use colored::Colorize;
 use std::path::{Path, PathBuf};
 
@@ -22,10 +22,12 @@ fn main() {
         (@subcommand add =>
             (about: "Manage a new game through wpfxm")
             (@arg PREFIX: +takes_value +required "The Wine prefix to look for games in, relative to the base folder")
+            (@arg force_run_x86: --x86 "Run all games in this prefix as a 32-bit application")
         )
         (@subcommand run =>
             (about: "Run a game in a prefix managed by wpfxm")
             (@arg PREFIX: +takes_value +required "The name of the Wine prefix")
+            (@arg force_run_x86: --x86 "Run the game as a 32-bit application")
         )
     )
     .setting(AppSettings::SubcommandRequired)
@@ -112,7 +114,13 @@ fn manage_new_game(config: &Config, args: &clap::ArgMatches) -> Result<(), Error
         game_path.to_string_lossy()
     ));
 
-    let prefix = Prefix::new(pfx_name, game_path, arch);
+    let prefix = Prefix {
+        name: pfx_name.into(),
+        game_path,
+        arch,
+        force_run_x86: args.is_present("force_run_x86"),
+    };
+
     prefix.save()?;
     prefix.run_hooks(config, &config.setup_hooks);
 
@@ -135,7 +143,11 @@ fn run_game(config: &Config, args: &clap::ArgMatches) -> Result<(), Error> {
         prefix.game_path.to_string_lossy().blue()
     ));
 
-    if let Err(err) = prefix.launch_process(config, &prefix.game_path) {
+    let launch_opts = LaunchOptions {
+        force_run_x86: prefix.force_run_x86 || args.is_present("force_run_x86"),
+    };
+
+    if let Err(err) = prefix.launch_process(config, &prefix.game_path, launch_opts) {
         return Err(Error::FailedToRunGame(
             err,
             prefix.game_path.to_string_lossy().to_string(),
