@@ -20,16 +20,20 @@ pub enum Error {
     #[fail(display = "prefix error")]
     Prefix(#[cause] PrefixError),
 
+    #[fail(display = "input error")]
+    Input(#[cause] InputError),
+
     #[fail(display = "{} prefix is already being managed", _0)]
     PrefixAlreadyManaged(String),
 
-    #[fail(display = "no games detected in prefix {}", _0)]
+    #[fail(display = "no games detected in prefix \"{}\"", _0)]
     NoGamesDetected(String),
 }
 
 impl_err_conv!(Error,
     ConfigError => Config,
     PrefixError => Prefix,
+    InputError => Input,
 );
 
 #[derive(Fail, Debug)]
@@ -75,4 +79,16 @@ pub enum PrefixError {
 
     #[fail(display = "hook failed to execute")]
     FailedToRunHook,
+}
+
+#[derive(Fail, Debug)]
+pub enum InputError {
+    #[fail(display = "failed to read line")]
+    ReadFailed(#[cause] ::std::io::Error),
+
+    #[fail(display = "failed to parse type: {}", _0)]
+    ParseFailed(String),
+
+    #[fail(display = "no list items were provided")]
+    NoItemsProvided,
 }

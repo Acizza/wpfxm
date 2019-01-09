@@ -1,4 +1,5 @@
 use super::PrefixArch;
+use crate::util;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -55,9 +56,9 @@ fn dir_diff(path: &Path, exclude_paths: &[&str], results: &mut Vec<PathBuf>) {
 
 pub fn unique_paths<P>(pfx: P, arch: PrefixArch) -> Vec<PathBuf>
 where
-    P: Into<PathBuf>,
+    P: AsRef<Path>,
 {
-    let pfx = pfx.into().join("drive_c");
+    let pfx = pfx.as_ref().join("drive_c");
     let mut paths = Vec::with_capacity(1);
 
     dir_diff(&pfx, &DEFAULT_ROOT_FOLDERS, &mut paths);
@@ -126,15 +127,20 @@ where
     executables
 }
 
-pub fn strip_base_paths<P>(base: P, paths: &mut Vec<PathBuf>)
+pub fn unique_executables<P>(pfx: P, arch: PrefixArch) -> Vec<PathBuf>
 where
-    P: Into<PathBuf>,
+    P: AsRef<Path>,
 {
-    let base = base.into();
+    const MAX_SEARCH_DEPTH: u8 = 4;
+
+    let paths = unique_paths(&pfx, arch);
+    let mut executables = Vec::new();
 
     for path in paths {
-        if let Ok(stripped) = path.strip_prefix(&base) {
-            *path = PathBuf::from(stripped);
-        }
+        let found = find_executables(path, MAX_SEARCH_DEPTH);
+        executables.extend(found);
     }
+
+    util::strip_base_paths(&pfx, &mut executables);
+    executables
 }

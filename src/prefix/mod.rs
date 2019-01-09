@@ -1,8 +1,8 @@
 pub mod scan;
 
 use crate::config::Config;
+use crate::display::{self, ErrorSeverity};
 use crate::error::PrefixError;
-use crate::log::{self, ErrorSeverity};
 use crate::util::dir;
 use serde_derive::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -68,7 +68,7 @@ where
         let file = match File::open(path) {
             Ok(f) => f,
             Err(err) => {
-                log::error(ErrorSeverity::Warning, err);
+                display::error(ErrorSeverity::Warning, err);
                 continue;
             }
         };
@@ -155,7 +155,7 @@ impl Prefix {
     where
         S: AsRef<str>,
     {
-        log::info(format!("running hook {}", name.as_ref()));
+        display::info(format!("running hook {}", name.as_ref()));
 
         let hook = Hook::create(name)?;
         let mut cmd = hook.build_run_cmd(config, self);
@@ -173,7 +173,7 @@ impl Prefix {
         for hook_name in hooks {
             match self.run_hook(hook_name, config) {
                 Ok(_) => (),
-                Err(err) => log::error(ErrorSeverity::Warning, err),
+                Err(err) => display::error(ErrorSeverity::Warning, err),
             }
         }
     }

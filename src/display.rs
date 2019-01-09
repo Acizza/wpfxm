@@ -40,3 +40,10 @@ where
 {
     println!("info: {}", msg.as_ref());
 }
+
+pub fn input<S>(msg: S)
+where
+    S: AsRef<str>,
+{
+    println!("input: {}", msg.as_ref());
+}

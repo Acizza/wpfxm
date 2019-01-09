@@ -1,13 +1,15 @@
 mod config;
+mod display;
 mod error;
-mod log;
+mod input;
 mod prefix;
 mod util;
 
 use crate::config::Config;
+use crate::display::ErrorSeverity;
 use crate::error::Error;
-use crate::log::ErrorSeverity;
-use crate::prefix::Prefix;
+use crate::prefix::{Prefix, PrefixArch};
+use std::path::{Path, PathBuf};
 
 fn main() {
     use clap::{clap_app, AppSettings};
@@ -28,7 +30,7 @@ fn main() {
     match run(&args) {
         Ok(_) => (),
         Err(err) => {
-            log::error(ErrorSeverity::Fatal, err);
+            display::error(ErrorSeverity::Fatal, err);
             std::process::exit(1);
         }
     }
@@ -38,18 +40,18 @@ fn run(args: &clap::ArgMatches) -> Result<(), Error> {
     let config = match Config::load(args.value_of("CONFIG")) {
         Ok(config) => config,
         Err(err) => {
-            log::error(ErrorSeverity::Warning, err);
+            display::error(ErrorSeverity::Warning, err);
 
             let default = Config::default();
 
             match default.save() {
                 Ok(save_path) => {
-                    log::info(format!(
+                    display::info(format!(
                         "new config saved to {}",
                         save_path.to_string_lossy()
                     ));
                 }
-                Err(err) => log::error(ErrorSeverity::Warning, err),
+                Err(err) => display::error(ErrorSeverity::Warning, err),
             }
 
             default
@@ -60,6 +62,30 @@ fn run(args: &clap::ArgMatches) -> Result<(), Error> {
         ("add", Some(args)) => manage_new_game(&config, args),
         _ => unreachable!(),
     }
+}
+
+fn select_game_in_prefix<P, S>(pfx: P, pfx_name: S, arch: PrefixArch) -> Result<PathBuf, Error>
+where
+    P: AsRef<Path>,
+    S: AsRef<str>,
+{
+    let mut found = prefix::scan::unique_executables(pfx, arch);
+
+    if found.is_empty() {
+        return Err(Error::NoGamesDetected(pfx_name.as_ref().to_string()));
+    }
+
+    let formatted_paths = found
+        .iter()
+        .map(|e| e.to_string_lossy())
+        .collect::<Vec<_>>();
+
+    display::input(format!("found {} game(s)", found.len()));
+
+    let index = input::select_from_list(&formatted_paths)?;
+    let game = found.swap_remove(index);
+
+    Ok(game)
 }
 
 fn manage_new_game(config: &Config, args: &clap::ArgMatches) -> Result<(), Error> {
@@ -76,24 +102,10 @@ fn manage_new_game(config: &Config, args: &clap::ArgMatches) -> Result<(), Error
 
     let pfx_path = config.base_directory.join(pfx_name);
     let arch = prefix::detect_arch(&pfx_path)?;
+    let game_path = select_game_in_prefix(pfx_path, pfx_name, arch)?;
 
-    let mut detected_games = {
-        let mut paths = prefix::scan::unique_paths(&pfx_path, arch);
-        prefix::scan::strip_base_paths(&pfx_path, &mut paths);
-        paths
-    };
-
-    let game_path = match detected_games.len() {
-        0 => return Err(Error::NoGamesDetected(pfx_name.into())),
-        1 => detected_games.swap_remove(0),
-        _ => {
-            println!("multiple games detected!");
-            unimplemented!()
-        }
-    };
-
-    log::info(format!(
-        "detected game in \"{}\" prefix at \"{}\"",
+    display::info(format!(
+        "prefix \"{}\" will launch \"{}\"",
         pfx_name,
         game_path.to_string_lossy()
     ));
