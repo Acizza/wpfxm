@@ -4,6 +4,7 @@ use crate::config::Config;
 use crate::display::{self, ErrorSeverity};
 use crate::error::PrefixError;
 use crate::util::dir;
+use colored::Colorize;
 use serde_derive::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::ffi::OsStr;
@@ -177,7 +178,12 @@ impl Prefix {
 
     pub fn run_hooks(&self, config: &Config, hooks: &[String]) {
         for (i, hook_name) in hooks.iter().enumerate() {
-            display::hook(format!("running {} [{}/{}]", hook_name, 1 + i, hooks.len()));
+            display::hook(format!(
+                "running {} [{}/{}]",
+                hook_name.green(),
+                1 + i,
+                hooks.len()
+            ));
 
             match self.run_hook_silent(hook_name, config) {
                 Ok(_) => (),

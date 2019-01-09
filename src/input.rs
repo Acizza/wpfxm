@@ -1,5 +1,6 @@
 use crate::display;
 use crate::error::InputError;
+use colored::Colorize;
 use std::fmt::{Debug, Display};
 use std::io;
 use std::str::FromStr;
@@ -33,7 +34,7 @@ where
 
 pub fn select_from_list<T>(items: &[T]) -> Result<usize, InputError>
 where
-    T: Display,
+    T: AsRef<str>,
 {
     if items.is_empty() {
         return Err(InputError::NoItemsProvided);
@@ -42,7 +43,7 @@ where
     display::input("enter the number next to your choice:");
 
     for (i, item) in items.iter().enumerate() {
-        display::input(format!("{} [{}]", 1 + i, item));
+        display::input(format!("{} [{}]", 1 + i, item.as_ref().blue()));
     }
 
     let index = read_range(1, items.len() + 1)? - 1;
