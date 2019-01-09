@@ -28,6 +28,12 @@ pub enum Error {
 
     #[fail(display = "no games detected in prefix \"{}\"", _0)]
     NoGamesDetected(String),
+
+    #[fail(display = "{} prefix is not managed by wpfxm", _0)]
+    PrefixNotManaged(String),
+
+    #[fail(display = "failed to run [{}]", _1)]
+    FailedToRunGame(#[cause] std::io::Error, String),
 }
 
 impl_err_conv!(Error,

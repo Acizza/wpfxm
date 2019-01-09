@@ -7,8 +7,9 @@ mod util;
 
 use crate::config::Config;
 use crate::display::ErrorSeverity;
-use crate::error::Error;
+use crate::error::{Error, PrefixError};
 use crate::prefix::{Prefix, PrefixArch};
+use colored::Colorize;
 use std::path::{Path, PathBuf};
 
 fn main() {
@@ -20,8 +21,11 @@ fn main() {
         (about: "A simple tool to manage Wine prefixes for games")
         (@subcommand add =>
             (about: "Manage a new game through wpfxm")
-            (@arg NAME: +takes_value +required "The name to reference the game by")
-            (@arg PREFIX: +takes_value "The name of the Wine prefix the game is in, relative to the base folder")
+            (@arg PREFIX: +takes_value +required "The Wine prefix to look for games in, relative to the base folder")
+        )
+        (@subcommand run =>
+            (about: "Run a game in a prefix managed by wpfxm")
+            (@arg PREFIX: +takes_value +required "The name of the Wine prefix")
         )
     )
     .setting(AppSettings::SubcommandRequired)
@@ -60,6 +64,7 @@ fn run(args: &clap::ArgMatches) -> Result<(), Error> {
 
     match args.subcommand() {
         ("add", Some(args)) => manage_new_game(&config, args),
+        ("run", Some(args)) => run_game(&config, args),
         _ => unreachable!(),
     }
 }
@@ -89,10 +94,7 @@ where
 }
 
 fn manage_new_game(config: &Config, args: &clap::ArgMatches) -> Result<(), Error> {
-    let pfx_name = args
-        .value_of("PREFIX")
-        .or_else(|| args.value_of("NAME"))
-        .unwrap();
+    let pfx_name = args.value_of("PREFIX").unwrap();
 
     if let Ok(path) = Prefix::get_data_path(pfx_name) {
         if path.exists() {
@@ -113,6 +115,32 @@ fn manage_new_game(config: &Config, args: &clap::ArgMatches) -> Result<(), Error
     let prefix = Prefix::new(pfx_name, game_path, arch);
     prefix.save()?;
     prefix.run_hooks(config, &config.setup_hooks);
+
+    Ok(())
+}
+
+fn run_game(config: &Config, args: &clap::ArgMatches) -> Result<(), Error> {
+    let pfx_name = args.value_of("PREFIX").unwrap();
+
+    let prefix = match Prefix::load(pfx_name) {
+        Ok(pfx) => pfx,
+        Err(PrefixError::FailedToReadConfig(_)) => {
+            return Err(Error::PrefixNotManaged(pfx_name.into()))
+        }
+        Err(err) => return Err(err.into()),
+    };
+
+    display::info(format!(
+        "running [{}]",
+        prefix.game_path.to_string_lossy().blue()
+    ));
+
+    if let Err(err) = prefix.launch_process(config, &prefix.game_path) {
+        return Err(Error::FailedToRunGame(
+            err,
+            prefix.game_path.to_string_lossy().to_string(),
+        ));
+    }
 
     Ok(())
 }

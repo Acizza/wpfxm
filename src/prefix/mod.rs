@@ -9,9 +9,9 @@ use serde_derive::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::ffi::OsStr;
 use std::fs::{self, File};
-use std::io::{BufRead, BufReader};
+use std::io::{self, BufRead, BufReader};
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Child, Command};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Copy, Clone)]
 pub enum PrefixArch {
@@ -133,6 +133,10 @@ impl Prefix {
         Ok(())
     }
 
+    pub fn get_prefix_path(&self, config: &Config) -> PathBuf {
+        config.base_directory.join(&self.name)
+    }
+
     pub fn get_data_path<S>(name: S) -> Result<PathBuf, PrefixError>
     where
         S: AsRef<str>,
@@ -143,13 +147,11 @@ impl Prefix {
     }
 
     pub fn attach_cmd_to_prefix(&self, config: &Config, cmd: &mut Command) {
-        let abs_path = config.base_directory.join(&self.name);
+        let abs_path = self.get_prefix_path(config);
 
         cmd.env("WINEPREFIX", &abs_path)
             .env("WINEARCH", OsStr::new(self.arch.into()))
             .env("WPFXM_PFX_NAME", &self.name);
-
-        cmd.current_dir(abs_path.join("drive_c"));
     }
 
     fn run_hook_silent<S>(&self, name: S, config: &Config) -> Result<(), PrefixError>
@@ -190,6 +192,34 @@ impl Prefix {
                 Err(err) => display::error(ErrorSeverity::Warning, err),
             }
         }
+    }
+
+    pub fn launch_process<P>(&self, config: &Config, relative_path: P) -> io::Result<Child>
+    where
+        P: AsRef<Path>,
+    {
+        let mut cmd = {
+            let wine_process = match self.arch {
+                PrefixArch::Win32 => "wine",
+                PrefixArch::Win64 => "wine64",
+            };
+
+            Command::new(wine_process)
+        };
+
+        let abs_exe_path = self.get_prefix_path(config).join(relative_path);
+        let game_dir = {
+            let mut path = abs_exe_path.clone();
+            path.pop();
+            path
+        };
+
+        cmd.arg(&abs_exe_path);
+        cmd.current_dir(&game_dir);
+
+        self.attach_cmd_to_prefix(config, &mut cmd);
+
+        cmd.spawn()
     }
 }
 
