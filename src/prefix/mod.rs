@@ -24,10 +24,7 @@ impl PrefixArch {
         let reader = BufReader::new(file);
 
         for line in reader.lines() {
-            let line = match line {
-                Ok(line) => line,
-                Err(_) => continue,
-            };
+            let line = try_cont!(line);
 
             if !line.contains(ARCH_STR) {
                 continue;
@@ -129,15 +126,8 @@ impl Prefix {
         let mut prefixes = Vec::new();
 
         for entry in entries {
-            let entry = match entry {
-                Ok(entry) => entry,
-                Err(_) => continue,
-            };
-
-            let ftype = match entry.file_type() {
-                Ok(ftype) => ftype,
-                Err(_) => continue,
-            };
+            let entry = try_cont!(entry);
+            let ftype = try_cont!(entry.file_type());
 
             if !ftype.is_file() {
                 continue;
@@ -233,9 +223,8 @@ impl Prefix {
                 hooks.len()
             ));
 
-            match self.run_hook_silent(hook_name, config) {
-                Ok(_) => (),
-                Err(err) => display::error(ErrorSeverity::Warning, err),
+            if let Err(err) = self.run_hook_silent(hook_name, config) {
+                display::error(ErrorSeverity::Warning, err);
             }
         }
     }

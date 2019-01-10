@@ -96,16 +96,8 @@ where
     let mut directories = Vec::new();
 
     for entry in entries {
-        let entry = match entry {
-            Ok(entry) => entry,
-            Err(_) => continue,
-        };
-
-        let ftype = match entry.file_type() {
-            Ok(ftype) => ftype,
-            Err(_) => continue,
-        };
-
+        let entry = try_cont!(entry);
+        let ftype = try_cont!(entry.file_type());
         let path = entry.path();
 
         if ftype.is_dir() {

@@ -2,6 +2,15 @@ pub mod dir;
 
 use std::path::{Path, PathBuf};
 
+macro_rules! try_cont {
+    ($x:expr) => {
+        match $x {
+            Ok(value) => value,
+            _ => continue,
+        }
+    };
+}
+
 pub fn strip_base_paths<P>(base: P, paths: &mut Vec<PathBuf>)
 where
     P: AsRef<Path>,

@@ -1,9 +1,11 @@
+#[macro_use]
+mod util;
+
 mod config;
 mod display;
 mod error;
 mod input;
 mod prefix;
-mod util;
 
 use crate::config::Config;
 use crate::display::ErrorSeverity;
