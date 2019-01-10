@@ -214,15 +214,21 @@ impl Prefix {
     where
         S: AsRef<str>,
     {
-        display::hook(format!("running {}", name.as_ref()));
+        display::hook(format!(
+            "running {} in {} prefix",
+            name.as_ref().green(),
+            self.name.blue()
+        ));
+
         self.run_hook_silent(name, config)
     }
 
     pub fn run_hooks(&self, config: &Config, hooks: &[String]) {
         for (i, hook_name) in hooks.iter().enumerate() {
             display::hook(format!(
-                "running {} [{}/{}]",
+                "running {} in {} prefix [{}/{}]",
                 hook_name.green(),
+                self.name.blue(),
                 1 + i,
                 hooks.len()
             ));
