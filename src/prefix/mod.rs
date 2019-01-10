@@ -6,7 +6,6 @@ use crate::error::PrefixError;
 use crate::util::dir;
 use colored::Colorize;
 use serde_derive::{Deserialize, Serialize};
-use std::borrow::Cow;
 use std::ffi::OsStr;
 use std::fs::{self, File};
 use std::io::{self, BufRead, BufReader};
@@ -99,24 +98,63 @@ pub struct Prefix {
 }
 
 impl Prefix {
-    pub fn load<'a, S>(name: S) -> Result<Prefix, PrefixError>
+    fn load_direct<S, P>(name: S, path: P) -> Result<Prefix, PrefixError>
     where
-        S: Into<Cow<'a, str>>,
+        S: Into<String>,
+        P: AsRef<Path>,
     {
-        let name = name.into();
-
-        let path = Prefix::get_data_path(&name)?;
         let contents = fs::read_to_string(&path).map_err(PrefixError::FailedToReadConfig)?;
 
         let mut prefix: Prefix =
             toml::from_str(&contents).map_err(PrefixError::FailedToParseConfig)?;
-        prefix.name = name.to_string();
+        prefix.name = name.into();
 
         Ok(prefix)
     }
 
+    pub fn load<S>(name: S) -> Result<Prefix, PrefixError>
+    where
+        S: Into<String>,
+    {
+        let name = name.into();
+        let path = Prefix::get_data_file(&name)?;
+
+        Prefix::load_direct(name, path)
+    }
+
+    pub fn load_all() -> Result<Vec<Prefix>, PrefixError> {
+        let entries =
+            fs::read_dir(Prefix::get_data_dir()?).map_err(PrefixError::FailedToReadDataDir)?;
+
+        let mut prefixes = Vec::new();
+
+        for entry in entries {
+            let entry = match entry {
+                Ok(entry) => entry,
+                Err(_) => continue,
+            };
+
+            let ftype = match entry.file_type() {
+                Ok(ftype) => ftype,
+                Err(_) => continue,
+            };
+
+            if !ftype.is_file() {
+                continue;
+            }
+
+            let name = entry.file_name().to_string_lossy().to_string();
+            let path = entry.path();
+
+            let pfx = Prefix::load_direct(name, path)?;
+            prefixes.push(pfx);
+        }
+
+        Ok(prefixes)
+    }
+
     pub fn save(&self) -> Result<(), PrefixError> {
-        let path = Prefix::get_data_path(&self.name)?;
+        let path = Prefix::get_data_file(&self.name)?;
         let toml = toml::to_string(self).map_err(PrefixError::FailedToSerializeConfig)?;
 
         fs::write(path, toml).map_err(PrefixError::FailedToWriteConfig)?;
@@ -127,11 +165,15 @@ impl Prefix {
         config.base_directory.join(&self.name)
     }
 
-    pub fn get_data_path<S>(name: S) -> Result<PathBuf, PrefixError>
+    pub fn get_data_dir() -> Result<PathBuf, PrefixError> {
+        dir::get_data_dir().ok_or(PrefixError::FailedToGetDataDir)
+    }
+
+    pub fn get_data_file<S>(name: S) -> Result<PathBuf, PrefixError>
     where
         S: AsRef<str>,
     {
-        let mut dir = dir::get_data_dir().ok_or(PrefixError::FailedToGetDataDir)?;
+        let mut dir = Prefix::get_data_dir()?;
         dir.push(name.as_ref());
         Ok(dir)
     }
@@ -255,6 +297,10 @@ impl Hook {
             .join(name.as_ref());
 
         path.set_extension("sh");
+
+        if !path.exists() {
+            return Err(PrefixError::HookNotFound(name.as_ref().into()));
+        }
 
         Ok(Hook { path })
     }

@@ -62,8 +62,11 @@ pub enum ConfigError {
 
 #[derive(Fail, Debug)]
 pub enum PrefixError {
-    #[fail(display = "failed to get local data directory")]
+    #[fail(display = "failed to get prefix data directory")]
     FailedToGetDataDir,
+
+    #[fail(display = "failed to read prefix data directory")]
+    FailedToReadDataDir(#[cause] std::io::Error),
 
     #[fail(display = "failed to get hooks directory")]
     FailedToGetHooksDir,
@@ -85,6 +88,9 @@ pub enum PrefixError {
 
     #[fail(display = "hook failed to execute")]
     FailedToRunHook,
+
+    #[fail(display = "unable to find hook {}", _0)]
+    HookNotFound(String),
 }
 
 #[derive(Fail, Debug)]

@@ -31,6 +31,14 @@ fn main() {
             (@arg env_vars: -e --env +takes_value +multiple "The environment variables to launch with")
             (@arg force_run_x86: --x86 "Run the application in 32-bit mode")
         )
+        (@subcommand hook =>
+            (about: "Manage hooks for a prefix")
+            (@subcommand run =>
+                (about: "Runs a hook in all managed Wine prefixes (unless -p is specified)")
+                (@arg HOOK: +takes_value +required "The name of the hook")
+                (@arg prefix: -p --prefix +takes_value "The prefix to run the hook in")
+            )
+        )
     )
     .setting(AppSettings::SubcommandRequired)
     .get_matches();
@@ -69,6 +77,7 @@ fn run(args: &clap::ArgMatches) -> Result<(), Error> {
     match args.subcommand() {
         ("add", Some(args)) => manage_new_game(&config, args),
         ("run", Some(args)) => run_game(&config, args),
+        ("hook", Some(args)) => hook::dispatch_command(&config, args),
         _ => unreachable!(),
     }
 }
@@ -122,7 +131,7 @@ fn parse_env_var_args(args: &clap::ArgMatches) -> Vec<(String, String)> {
 fn manage_new_game(config: &Config, args: &clap::ArgMatches) -> Result<(), Error> {
     let pfx_name = args.value_of("PREFIX").unwrap();
 
-    if let Ok(path) = Prefix::get_data_path(pfx_name) {
+    if let Ok(path) = Prefix::get_data_file(pfx_name) {
         if path.exists() {
             return Err(Error::PrefixAlreadyManaged(pfx_name.into()));
         }
@@ -181,4 +190,35 @@ fn run_game(config: &Config, args: &clap::ArgMatches) -> Result<(), Error> {
     }
 
     Ok(())
+}
+
+mod hook {
+    use super::*;
+
+    pub fn dispatch_command(config: &Config, args: &clap::ArgMatches) -> Result<(), Error> {
+        match args.subcommand() {
+            ("run", Some(args)) => run_hook(config, args),
+            _ => unreachable!(),
+        }
+    }
+
+    fn run_hook(config: &Config, args: &clap::ArgMatches) -> Result<(), Error> {
+        let hook_name = args.value_of("HOOK").unwrap();
+
+        match args.value_of("prefix") {
+            Some(pfx_name) => {
+                let prefix = Prefix::load(pfx_name)?;
+                prefix.run_hook(hook_name, config)?;
+            }
+            None => {
+                let prefixes = Prefix::load_all()?;
+
+                for prefix in prefixes {
+                    prefix.run_hook(hook_name, config)?;
+                }
+            }
+        }
+
+        Ok(())
+    }
 }
