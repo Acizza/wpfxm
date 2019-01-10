@@ -11,6 +11,15 @@ macro_rules! try_cont {
     };
 }
 
+macro_rules! try_opt_cont {
+    ($x:expr) => {
+        match $x {
+            Some(value) => value,
+            _ => continue,
+        }
+    };
+}
+
 pub fn strip_base_paths<P>(base: P, paths: &mut Vec<PathBuf>)
 where
     P: AsRef<Path>,

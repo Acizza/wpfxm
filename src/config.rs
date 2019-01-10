@@ -1,6 +1,7 @@
 use crate::error::ConfigError;
 use crate::util::dir;
 use serde_derive::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
@@ -13,7 +14,7 @@ pub struct Config {
     #[serde(default)]
     pub setup_hooks: Vec<Filename>,
     #[serde(default)]
-    pub global_env_vars: Vec<(String, String)>,
+    pub global_env_vars: HashMap<String, String>,
 }
 
 impl Config {
@@ -56,7 +57,7 @@ impl Default for Config {
         Config {
             base_directory: default_base_directory(),
             setup_hooks: Vec::new(),
-            global_env_vars: Vec::new(),
+            global_env_vars: HashMap::new(),
         }
     }
 }

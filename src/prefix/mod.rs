@@ -6,6 +6,7 @@ use crate::error::PrefixError;
 use crate::util::dir;
 use colored::Colorize;
 use serde_derive::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::fs::{self, File};
 use std::io::{self, BufRead, BufReader};
@@ -90,8 +91,8 @@ pub struct Prefix {
     pub name: String,
     pub game_path: PathBuf,
     pub arch: PrefixArch,
-    pub env_vars: Vec<(String, String)>,
     pub force_run_x86: bool,
+    pub env_vars: HashMap<String, String>,
 }
 
 impl Prefix {
@@ -273,8 +274,8 @@ impl Prefix {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LaunchOptions {
-    pub env_vars: Vec<(String, String)>,
     pub force_run_x86: bool,
+    pub env_vars: HashMap<String, String>,
 }
 
 #[derive(Debug)]
@@ -287,17 +288,25 @@ impl Hook {
     where
         S: AsRef<str>,
     {
-        let mut path = dir::get_hooks_dir()
-            .ok_or(PrefixError::FailedToGetHooksDir)?
-            .join(name.as_ref());
-
-        path.set_extension("sh");
+        let path = Hook::get_path(&name)?;
 
         if !path.exists() {
             return Err(PrefixError::HookNotFound(name.as_ref().into()));
         }
 
         Ok(Hook { path })
+    }
+
+    pub fn get_path<S>(name: S) -> Result<PathBuf, PrefixError>
+    where
+        S: AsRef<str>,
+    {
+        let mut path = dir::get_hooks_dir()
+            .ok_or(PrefixError::FailedToGetHooksDir)?
+            .join(name.as_ref());
+
+        path.set_extension("sh");
+        Ok(path)
     }
 
     pub fn build_run_cmd(&self, config: &Config, prefix: &Prefix) -> Command {

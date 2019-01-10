@@ -34,6 +34,12 @@ pub enum Error {
 
     #[fail(display = "failed to run [{}]", _1)]
     FailedToRunGame(#[cause] std::io::Error, String),
+
+    #[fail(display = "path doesn't exist: {}", _0)]
+    PathDoesntExist(String),
+
+    #[fail(display = "unable to find hook {}", _0)]
+    HookNotFound(String),
 }
 
 impl_err_conv!(Error,
