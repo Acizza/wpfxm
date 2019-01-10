@@ -71,6 +71,9 @@ pub enum PrefixError {
     #[fail(display = "failed to get hooks directory")]
     FailedToGetHooksDir,
 
+    #[fail(display = "failed to read path {}", _1)]
+    FailedToReadPath(#[cause] std::io::Error, String),
+
     #[fail(display = "failed to read prefix configuration")]
     FailedToReadConfig(#[cause] std::io::Error),
 

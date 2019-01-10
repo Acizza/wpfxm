@@ -1,4 +1,6 @@
 use super::PrefixArch;
+use crate::display::{self, ErrorSeverity};
+use crate::error::PrefixError;
 use crate::util;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -23,20 +25,17 @@ fn dir_diff(path: &Path, exclude_paths: &[&str], results: &mut Vec<PathBuf>) {
     let entries = match fs::read_dir(path) {
         Ok(entries) => entries,
         Err(err) => {
-            eprintln!("failed to read {:?}: {}", path, err);
+            display::error(
+                ErrorSeverity::Warning,
+                PrefixError::FailedToReadPath(err, path.to_string_lossy().into()),
+            );
+
             return;
         }
     };
 
     for entry in entries {
-        let entry = match entry {
-            Ok(entry) => entry,
-            Err(err) => {
-                eprintln!("failed to read {:?}: {}", path, err);
-                continue;
-            }
-        };
-
+        let entry = try_cont!(entry);
         let mut skip_file = false;
 
         for &excluded_path in exclude_paths {
