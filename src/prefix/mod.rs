@@ -138,9 +138,13 @@ impl Prefix {
     pub fn attach_cmd_to_prefix(&self, config: &Config, cmd: &mut Command) {
         let abs_path = self.get_prefix_path(config);
 
-        cmd.env("WINEPREFIX", &abs_path)
-            .env("WINEARCH", OsStr::new(self.arch.into()))
-            .env("WPFXM_PFX_NAME", &self.name);
+        cmd.env("WINEPREFIX", &abs_path);
+        cmd.env("WINEARCH", OsStr::new(self.arch.into()));
+        cmd.env("WPFXM_PFX_NAME", &self.name);
+
+        for (name, value) in &config.global_env_vars {
+            cmd.env(name, value);
+        }
     }
 
     fn run_hook_silent<S>(&self, name: S, config: &Config) -> Result<(), PrefixError>

@@ -12,6 +12,8 @@ pub struct Config {
     pub base_directory: PathBuf,
     #[serde(default)]
     pub setup_hooks: Vec<Filename>,
+    #[serde(default)]
+    pub global_env_vars: Vec<(String, String)>,
 }
 
 impl Config {
@@ -34,7 +36,7 @@ impl Config {
 
     pub fn save(&self) -> Result<PathBuf, ConfigError> {
         let path = Config::get_path()?;
-        let toml = toml::to_string_pretty(self).map_err(ConfigError::FailedToSerialize)?;
+        let toml = toml::to_string(self).map_err(ConfigError::FailedToSerialize)?;
 
         fs::write(&path, toml)
             .map_err(|err| ConfigError::FailedToWrite(err, path.to_string_lossy().to_string()))?;
@@ -54,6 +56,7 @@ impl Default for Config {
         Config {
             base_directory: default_base_directory(),
             setup_hooks: Vec::new(),
+            global_env_vars: Vec::new(),
         }
     }
 }
