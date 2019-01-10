@@ -117,7 +117,7 @@ impl Prefix {
 
     pub fn save(&self) -> Result<(), PrefixError> {
         let path = Prefix::get_data_path(&self.name)?;
-        let toml = toml::to_string_pretty(self).map_err(PrefixError::FailedToSerializeConfig)?;
+        let toml = toml::to_string(self).map_err(PrefixError::FailedToSerializeConfig)?;
 
         fs::write(path, toml).map_err(PrefixError::FailedToWriteConfig)?;
         Ok(())
@@ -226,12 +226,17 @@ impl Prefix {
 
         self.attach_cmd_to_prefix(config, &mut cmd);
 
+        for (name, value) in opts.env_vars {
+            cmd.env(name, value);
+        }
+
         cmd.spawn()
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Copy, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LaunchOptions {
+    pub env_vars: Vec<(String, String)>,
     pub force_run_x86: bool,
 }
 

@@ -20,14 +20,16 @@ fn main() {
         (author: env!("CARGO_PKG_AUTHORS"))
         (about: "A simple tool to manage Wine prefixes for games")
         (@subcommand add =>
-            (about: "Manage a new game through wpfxm")
-            (@arg PREFIX: +takes_value +required "The Wine prefix to look for games in, relative to the base folder")
-            (@arg force_run_x86: --x86 "Run all games in this prefix as a 32-bit application")
+            (about: "Manage a new prefix through wpfxm")
+            (@arg PREFIX: +takes_value +required "The Wine prefix to look for applications in, relative to the base folder")
+            (@arg env_vars: -e --env +takes_value +multiple "The environment variables to always use with this prefix")
+            (@arg force_run_x86: --x86 "Run all applications in this prefix in 32-bit mode")
         )
         (@subcommand run =>
-            (about: "Run a game in a prefix managed by wpfxm")
+            (about: "Run an application in a prefix managed by wpfxm")
             (@arg PREFIX: +takes_value +required "The name of the Wine prefix")
-            (@arg force_run_x86: --x86 "Run the game as a 32-bit application")
+            (@arg env_vars: -e --env +takes_value +multiple "The environment variables to launch with")
+            (@arg force_run_x86: --x86 "Run the application in 32-bit mode")
         )
     )
     .setting(AppSettings::SubcommandRequired)
@@ -95,6 +97,28 @@ where
     Ok(game)
 }
 
+fn parse_env_var_arg<S>(arg: S) -> Option<(String, String)>
+where
+    S: AsRef<str>,
+{
+    let split = arg.as_ref().splitn(2, '=').collect::<Vec<_>>();
+
+    if split.len() < 2 {
+        return None;
+    }
+
+    let name = split[0].to_string();
+    let value = split[1].to_string();
+
+    Some((name, value))
+}
+
+fn parse_env_var_args(args: &clap::ArgMatches) -> Vec<(String, String)> {
+    args.values_of_lossy("env_vars")
+        .map(|ev| ev.iter().filter_map(parse_env_var_arg).collect())
+        .unwrap_or_else(Vec::new)
+}
+
 fn manage_new_game(config: &Config, args: &clap::ArgMatches) -> Result<(), Error> {
     let pfx_name = args.value_of("PREFIX").unwrap();
 
@@ -118,7 +142,7 @@ fn manage_new_game(config: &Config, args: &clap::ArgMatches) -> Result<(), Error
         name: pfx_name.into(),
         game_path,
         arch,
-        env_vars: Vec::new(),
+        env_vars: parse_env_var_args(args),
         force_run_x86: args.is_present("force_run_x86"),
     };
 
@@ -145,6 +169,7 @@ fn run_game(config: &Config, args: &clap::ArgMatches) -> Result<(), Error> {
     ));
 
     let launch_opts = LaunchOptions {
+        env_vars: parse_env_var_args(args),
         force_run_x86: prefix.force_run_x86 || args.is_present("force_run_x86"),
     };
 
