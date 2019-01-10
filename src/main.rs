@@ -9,11 +9,7 @@ mod prefix;
 
 use crate::config::Config;
 use crate::display::ErrorSeverity;
-use crate::error::{Error, PrefixError};
-use crate::prefix::{LaunchOptions, Prefix, PrefixArch};
-use colored::Colorize;
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use crate::error::Error;
 
 fn main() {
     use clap::{clap_app, AppSettings};
@@ -136,148 +132,128 @@ fn run(args: &clap::ArgMatches) -> Result<(), Error> {
     };
 
     match args.subcommand() {
-        ("add", Some(args)) => manage_new_game(&config, args),
-        ("run", Some(args)) => run_game(&config, args),
+        ("add", Some(args)) => command::add::manage_new_game(&config, args),
+        ("run", Some(args)) => command::run::run_game(&config, args),
         ("hook", Some(args)) => command::hook::dispatch(&config, args),
         ("config", Some(args)) => command::config::dispatch(&mut config, args),
         _ => unreachable!(),
     }
 }
 
-fn select_game_in_prefix<P, S>(pfx: P, pfx_name: S, arch: PrefixArch) -> Result<PathBuf, Error>
-where
-    P: AsRef<Path>,
-    S: AsRef<str>,
-{
-    let mut found = prefix::scan::unique_executables(pfx, arch);
-
-    if found.is_empty() {
-        return Err(Error::NoGamesDetected(pfx_name.as_ref().to_string()));
-    }
-
-    let formatted_paths = found
-        .iter()
-        .map(|e| e.to_string_lossy())
-        .collect::<Vec<_>>();
-
-    display::input(format!("found {} game(s)", found.len()));
-
-    let index = input::select_from_list(&formatted_paths)?;
-    let game = found.swap_remove(index);
-
-    Ok(game)
-}
-
-fn parse_env_var_arg<S>(arg: S) -> Option<(String, String)>
-where
-    S: AsRef<str>,
-{
-    let split = arg.as_ref().splitn(2, '=').collect::<Vec<_>>();
-
-    if split.len() < 2 {
-        return None;
-    }
-
-    let name = split[0].to_string();
-    let value = split[1].to_string();
-
-    Some((name, value))
-}
-
-fn parse_env_var_args(args: Option<Vec<String>>) -> HashMap<String, String> {
-    let args = match args {
-        Some(args) => args,
-        None => return HashMap::new(),
-    };
-
-    let mut env_vars = HashMap::new();
-
-    for arg in args {
-        let (name, value) = try_opt_cont!(parse_env_var_arg(arg));
-        env_vars.insert(name, value);
-    }
-
-    env_vars
-}
-
-fn parse_true_false_arg<S>(arg: S) -> bool
-where
-    S: AsRef<str>,
-{
-    let arg = arg.as_ref().to_ascii_lowercase();
-
-    match arg.as_ref() {
-        "true" | "1" => true,
-        _ => false,
-    }
-}
-
-fn manage_new_game(config: &Config, args: &clap::ArgMatches) -> Result<(), Error> {
-    let pfx_name = args.value_of("PREFIX").unwrap();
-
-    if let Ok(path) = Prefix::get_data_file(pfx_name) {
-        if path.exists() {
-            return Err(Error::PrefixAlreadyManaged(pfx_name.into()));
-        }
-    }
-
-    let pfx_path = config.base_directory.join(pfx_name);
-    let arch = prefix::detect_arch(&pfx_path)?;
-    let game_path = select_game_in_prefix(pfx_path, pfx_name, arch)?;
-
-    display::info(format!(
-        "prefix \"{}\" will launch \"{}\"",
-        pfx_name,
-        game_path.to_string_lossy()
-    ));
-
-    let prefix = Prefix {
-        name: pfx_name.into(),
-        game_path,
-        arch,
-        force_run_x86: args.is_present("force_run_x86"),
-        env_vars: parse_env_var_args(args.values_of_lossy("env_vars")),
-    };
-
-    prefix.save()?;
-    prefix.run_hooks(config, &config.setup_hooks);
-
-    Ok(())
-}
-
-fn run_game(config: &Config, args: &clap::ArgMatches) -> Result<(), Error> {
-    let pfx_name = args.value_of("PREFIX").unwrap();
-
-    let prefix = match Prefix::load(pfx_name) {
-        Ok(pfx) => pfx,
-        Err(PrefixError::FailedToReadConfig(_)) => {
-            return Err(Error::PrefixNotManaged(pfx_name.into()))
-        }
-        Err(err) => return Err(err.into()),
-    };
-
-    display::info(format!(
-        "running [{}]",
-        prefix.game_path.to_string_lossy().blue()
-    ));
-
-    let launch_opts = LaunchOptions {
-        env_vars: parse_env_var_args(args.values_of_lossy("env_vars")),
-        force_run_x86: prefix.force_run_x86 || args.is_present("force_run_x86"),
-    };
-
-    if let Err(err) = prefix.launch_process(config, &prefix.game_path, launch_opts) {
-        return Err(Error::FailedToRunGame(
-            err,
-            prefix.game_path.to_string_lossy().to_string(),
-        ));
-    }
-
-    Ok(())
-}
-
 mod command {
-    use super::*;
+    // Here's what may be a compiler bug!
+    // Rust says that this import isn't used, but you'll get errors about
+    // functions from this trait not being in scope if it's removed
+    #[allow(unused_imports)]
+    use colored::Colorize;
+
+    use crate::config::Config;
+    use crate::display;
+    use crate::error::{Error, PrefixError};
+    use crate::input;
+    use crate::prefix::{self, LaunchOptions, Prefix, PrefixArch};
+    use std::collections::HashMap;
+    use std::path::{Path, PathBuf};
+
+    pub mod add {
+        use super::*;
+
+        pub fn manage_new_game(config: &Config, args: &clap::ArgMatches) -> Result<(), Error> {
+            let pfx_name = args.value_of("PREFIX").unwrap();
+
+            if let Ok(path) = Prefix::get_data_file(pfx_name) {
+                if path.exists() {
+                    return Err(Error::PrefixAlreadyManaged(pfx_name.into()));
+                }
+            }
+
+            let pfx_path = config.base_directory.join(pfx_name);
+            let arch = prefix::detect_arch(&pfx_path)?;
+            let game_path = select_game_in_prefix(pfx_path, pfx_name, arch)?;
+
+            display::info(format!(
+                "prefix \"{}\" will launch \"{}\"",
+                pfx_name,
+                game_path.to_string_lossy()
+            ));
+
+            let prefix = Prefix {
+                name: pfx_name.into(),
+                game_path,
+                arch,
+                force_run_x86: args.is_present("force_run_x86"),
+                env_vars: parse_env_var_args(args.values_of_lossy("env_vars")),
+            };
+
+            prefix.save()?;
+            prefix.run_hooks(config, &config.setup_hooks);
+
+            Ok(())
+        }
+
+        fn select_game_in_prefix<P, S>(
+            pfx: P,
+            pfx_name: S,
+            arch: PrefixArch,
+        ) -> Result<PathBuf, Error>
+        where
+            P: AsRef<Path>,
+            S: AsRef<str>,
+        {
+            let mut found = prefix::scan::unique_executables(pfx, arch);
+
+            if found.is_empty() {
+                return Err(Error::NoGamesDetected(pfx_name.as_ref().to_string()));
+            }
+
+            let formatted_paths = found
+                .iter()
+                .map(|e| e.to_string_lossy())
+                .collect::<Vec<_>>();
+
+            display::input(format!("found {} game(s)", found.len()));
+
+            let index = input::select_from_list(&formatted_paths)?;
+            let game = found.swap_remove(index);
+
+            Ok(game)
+        }
+    }
+
+    pub mod run {
+        use super::*;
+
+        pub fn run_game(config: &Config, args: &clap::ArgMatches) -> Result<(), Error> {
+            let pfx_name = args.value_of("PREFIX").unwrap();
+
+            let prefix = match Prefix::load(pfx_name) {
+                Ok(pfx) => pfx,
+                Err(PrefixError::FailedToReadConfig(_)) => {
+                    return Err(Error::PrefixNotManaged(pfx_name.into()))
+                }
+                Err(err) => return Err(err.into()),
+            };
+
+            display::info(format!(
+                "running [{}]",
+                prefix.game_path.to_string_lossy().blue()
+            ));
+
+            let launch_opts = LaunchOptions {
+                env_vars: parse_env_var_args(args.values_of_lossy("env_vars")),
+                force_run_x86: prefix.force_run_x86 || args.is_present("force_run_x86"),
+            };
+
+            if let Err(err) = prefix.launch_process(config, &prefix.game_path, launch_opts) {
+                return Err(Error::FailedToRunGame(
+                    err,
+                    prefix.game_path.to_string_lossy().to_string(),
+                ));
+            }
+
+            Ok(())
+        }
+    }
 
     pub mod hook {
         use super::*;
@@ -501,6 +477,50 @@ mod command {
             }
 
             Ok(())
+        }
+    }
+
+    fn parse_env_var_arg<S>(arg: S) -> Option<(String, String)>
+    where
+        S: AsRef<str>,
+    {
+        let split = arg.as_ref().splitn(2, '=').collect::<Vec<_>>();
+
+        if split.len() < 2 {
+            return None;
+        }
+
+        let name = split[0].to_string();
+        let value = split[1].to_string();
+
+        Some((name, value))
+    }
+
+    fn parse_env_var_args(args: Option<Vec<String>>) -> HashMap<String, String> {
+        let args = match args {
+            Some(args) => args,
+            None => return HashMap::new(),
+        };
+
+        let mut env_vars = HashMap::new();
+
+        for arg in args {
+            let (name, value) = try_opt_cont!(parse_env_var_arg(arg));
+            env_vars.insert(name, value);
+        }
+
+        env_vars
+    }
+
+    fn parse_true_false_arg<S>(arg: S) -> bool
+    where
+        S: AsRef<str>,
+    {
+        let arg = arg.as_ref().to_ascii_lowercase();
+
+        match arg.as_ref() {
+            "true" | "1" => true,
+            _ => false,
         }
     }
 }
