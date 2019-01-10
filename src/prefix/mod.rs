@@ -94,6 +94,7 @@ pub struct Prefix {
     pub name: String,
     pub game_path: PathBuf,
     pub arch: PrefixArch,
+    pub env_vars: Vec<(String, String)>,
     pub force_run_x86: bool,
 }
 
@@ -143,6 +144,10 @@ impl Prefix {
         cmd.env("WPFXM_PFX_NAME", &self.name);
 
         for (name, value) in &config.global_env_vars {
+            cmd.env(name, value);
+        }
+
+        for (name, value) in &self.env_vars {
             cmd.env(name, value);
         }
     }

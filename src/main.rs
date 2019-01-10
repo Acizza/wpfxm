@@ -118,6 +118,7 @@ fn manage_new_game(config: &Config, args: &clap::ArgMatches) -> Result<(), Error
         name: pfx_name.into(),
         game_path,
         arch,
+        env_vars: Vec::new(),
         force_run_x86: args.is_present("force_run_x86"),
     };
 
