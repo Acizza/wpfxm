@@ -33,13 +33,22 @@ pub enum Error {
     PrefixNotManaged(String),
 
     #[fail(display = "failed to run [{}]", _1)]
-    FailedToRunGame(#[cause] std::io::Error, String),
+    FailedToRunProcess(#[cause] std::io::Error, String),
 
     #[fail(display = "path doesn't exist: {}", _0)]
     PathDoesntExist(String),
 
     #[fail(display = "unable to find hook {}", _0)]
     HookNotFound(String),
+
+    #[fail(display = "game path not set for prefix; try adding the prefix first")]
+    GamePathNotSet,
+
+    #[fail(display = "game already added to prefix")]
+    GameAlreadyAdded,
+
+    #[fail(display = "{} is not a valid Windows version; valid options mimic that of winetricks (ex. winxp, win7, win10)", _0)]
+    InvalidWindowsVersion(String),
 }
 
 impl_err_conv!(Error,
@@ -100,6 +109,15 @@ pub enum PrefixError {
 
     #[fail(display = "unable to find hook {}", _0)]
     HookNotFound(String),
+
+    #[fail(display = "failed to create Wine prefix")]
+    FailedToCreatePrefix(#[cause] std::io::Error),
+
+    #[fail(display = "Wine failed to run successfully")]
+    WineFailedToExecute,
+
+    #[fail(display = "failed to set prefix Windows version")]
+    FailedToSetWindowsVersion,
 }
 
 #[derive(Fail, Debug)]

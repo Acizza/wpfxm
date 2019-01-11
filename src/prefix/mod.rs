@@ -40,6 +40,19 @@ impl PrefixArch {
 
         None
     }
+
+    pub fn parse<S>(string: S) -> Option<PrefixArch>
+    where
+        S: AsRef<str>,
+    {
+        let string = string.as_ref().to_ascii_lowercase();
+
+        match string.as_ref() {
+            "win32" => Some(PrefixArch::Win32),
+            "win64" => Some(PrefixArch::Win64),
+            _ => None,
+        }
+    }
 }
 
 impl<'a> Into<&'a str> for PrefixArch {
@@ -48,6 +61,12 @@ impl<'a> Into<&'a str> for PrefixArch {
             PrefixArch::Win32 => "win32",
             PrefixArch::Win64 => "win64",
         }
+    }
+}
+
+impl Default for PrefixArch {
+    fn default() -> PrefixArch {
+        PrefixArch::Win64
     }
 }
 
@@ -85,11 +104,73 @@ where
     Ok(arch)
 }
 
+#[derive(Debug, Copy, Clone)]
+pub enum WindowsVersion {
+    Windows31,
+    Windows95,
+    Windows98,
+    Windows2000,
+    Windows2003,
+    WindowsXP,
+    WindowsVista,
+    WindowsServer2008,
+    Windows7,
+    Windows8,
+    Windows81,
+    Windows10,
+}
+
+impl WindowsVersion {
+    pub fn parse<S>(arg: S) -> Option<WindowsVersion>
+    where
+        S: AsRef<str>,
+    {
+        use self::WindowsVersion::*;
+        let arg = arg.as_ref().to_ascii_lowercase();
+
+        match arg.as_ref() {
+            "win31" => Some(Windows31),
+            "win95" => Some(Windows95),
+            "win98" => Some(Windows98),
+            "win2k" => Some(Windows2000),
+            "win2k3" => Some(Windows2003),
+            "winxp" => Some(WindowsXP),
+            "vista" => Some(WindowsVista),
+            "win2k8" => Some(WindowsServer2008),
+            "win7" => Some(Windows7),
+            "win8" => Some(Windows8),
+            "win81" => Some(Windows81),
+            "win10" => Some(Windows10),
+            _ => None,
+        }
+    }
+}
+
+impl<'a> Into<&'a str> for WindowsVersion {
+    fn into(self) -> &'a str {
+        use self::WindowsVersion::*;
+        match self {
+            Windows31 => "win31",
+            Windows95 => "win95",
+            Windows98 => "win98",
+            Windows2000 => "win2k",
+            Windows2003 => "win2k3",
+            WindowsXP => "winxp",
+            WindowsVista => "vista",
+            WindowsServer2008 => "win2k8",
+            Windows7 => "win7",
+            Windows8 => "win8",
+            Windows81 => "win81",
+            Windows10 => "win10",
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Prefix {
     #[serde(skip)]
     pub name: String,
-    pub game_path: PathBuf,
+    pub game_path: Option<PathBuf>,
     pub arch: PrefixArch,
     pub force_run_x86: bool,
     pub env_vars: HashMap<String, String>,
@@ -142,6 +223,42 @@ impl Prefix {
         }
 
         Ok(prefixes)
+    }
+
+    pub fn create(&self, config: &Config) -> Result<(), PrefixError> {
+        let mut cmd = Command::new("wineboot");
+
+        self.attach_cmd_to_prefix(config, &mut cmd);
+        let status = cmd.status().map_err(PrefixError::FailedToCreatePrefix)?;
+
+        if !status.success() {
+            return Err(PrefixError::WineFailedToExecute);
+        }
+
+        Ok(())
+    }
+
+    pub fn set_windows_version(
+        &self,
+        config: &Config,
+        ver: WindowsVersion,
+    ) -> Result<(), PrefixError> {
+        let ver_str: &str = ver.into();
+        display::info(format!("setting Windows version to {}", ver_str.blue()));
+
+        let mut cmd = Command::new("winetricks");
+        cmd.arg(&ver_str);
+        cmd.env("WINEPREFIX", self.get_prefix_path(config));
+
+        let status = cmd
+            .status()
+            .map_err(|_| PrefixError::FailedToSetWindowsVersion)?;
+
+        if !status.success() {
+            return Err(PrefixError::FailedToSetWindowsVersion);
+        }
+
+        Ok(())
     }
 
     pub fn save(&self) -> Result<(), PrefixError> {
@@ -233,7 +350,7 @@ impl Prefix {
     pub fn launch_process<P>(
         &self,
         config: &Config,
-        relative_path: P,
+        path: P,
         opts: LaunchOptions,
     ) -> io::Result<Child>
     where
@@ -252,15 +369,16 @@ impl Prefix {
             Command::new(wine_process)
         };
 
-        let abs_exe_path = self.get_prefix_path(config).join(relative_path);
-        let game_dir = {
-            let mut path = abs_exe_path.clone();
+        let path = path.as_ref();
+
+        let exe_dir = {
+            let mut path = PathBuf::from(&path);
             path.pop();
             path
         };
 
-        cmd.arg(&abs_exe_path);
-        cmd.current_dir(&game_dir);
+        cmd.arg(&path);
+        cmd.current_dir(&exe_dir);
 
         self.attach_cmd_to_prefix(config, &mut cmd);
 
@@ -270,12 +388,26 @@ impl Prefix {
 
         cmd.spawn()
     }
+
+    pub fn launch_prefix_process<P>(
+        &self,
+        config: &Config,
+        relative_path: P,
+        opts: LaunchOptions,
+    ) -> io::Result<Child>
+    where
+        P: AsRef<Path>,
+    {
+        let path = self.get_prefix_path(config).join(relative_path);
+        self.launch_process(config, path, opts)
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LaunchOptions {
     pub force_run_x86: bool,
     pub env_vars: HashMap<String, String>,
+    pub args: Vec<String>,
 }
 
 #[derive(Debug)]

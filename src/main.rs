@@ -18,8 +18,17 @@ fn main() {
         (version: env!("CARGO_PKG_VERSION"))
         (author: env!("CARGO_PKG_AUTHORS"))
         (about: "A simple tool to manage Wine prefixes for games")
+        (@subcommand new =>
+            (about: "Create a new Wine prefix through wpfxm")
+            (@arg PREFIX: +takes_value +required "The name of the Wine prefix")
+            (@arg arch: -a --arch +takes_value default_value("win64") "The architecture to use for the prefix")
+            (@arg env_vars: -e --env +takes_value +multiple "The environment variables to use for the prefix")
+            (@arg run: -r --run +takes_value +multiple "The Wine program to run after prefix creation")
+            (@arg force_run_x86: --x86 "Run all applications in this prefix as 32-bit, even if the prefix is 64-bit")
+            (@arg winver: -v --version +takes_value "Set the Windows version of the prefix, via winetricks")
+        )
         (@subcommand add =>
-            (about: "Manage a new prefix through wpfxm")
+            (about: "Manage an existing prefix through wpfxm")
             (@arg PREFIX: +takes_value +required "The Wine prefix to look for applications in, relative to the base folder")
             (@arg env_vars: -e --env +takes_value +multiple "The environment variables to always use with this prefix")
             (@arg force_run_x86: --x86 "Run all applications in this prefix in 32-bit mode")
@@ -132,6 +141,7 @@ fn run(args: &clap::ArgMatches) -> Result<(), Error> {
     };
 
     match args.subcommand() {
+        ("new", Some(args)) => command::new::create_prefix(&config, args),
         ("add", Some(args)) => command::add::manage_new_game(&config, args),
         ("run", Some(args)) => command::run::run_game(&config, args),
         ("hook", Some(args)) => command::hook::dispatch(&config, args),
@@ -151,9 +161,68 @@ mod command {
     use crate::display;
     use crate::error::{Error, PrefixError};
     use crate::input;
-    use crate::prefix::{self, LaunchOptions, Prefix, PrefixArch};
+    use crate::prefix::{self, LaunchOptions, Prefix, PrefixArch, WindowsVersion};
     use std::collections::HashMap;
     use std::path::{Path, PathBuf};
+
+    pub mod new {
+        use super::*;
+
+        pub fn create_prefix(config: &Config, args: &clap::ArgMatches) -> Result<(), Error> {
+            let pfx_name = args.value_of("PREFIX").unwrap();
+
+            if Prefix::get_data_file(&pfx_name)?.exists() {
+                return Err(Error::PrefixAlreadyManaged(pfx_name.into()));
+            }
+
+            display::info(format!("creating prefix {}", pfx_name.blue()));
+
+            let pfx = Prefix {
+                name: pfx_name.into(),
+                game_path: None,
+                arch: {
+                    args.value_of("arch")
+                        .and_then(PrefixArch::parse)
+                        .unwrap_or_default()
+                },
+                force_run_x86: args.is_present("force_run_x86"),
+                env_vars: parse_env_var_args(args.values_of_lossy("env_vars")),
+            };
+
+            pfx.create(config)?;
+            pfx.save()?;
+
+            if let Some(ver_str) = args.value_of("winver") {
+                let ver_str = ver_str.to_ascii_lowercase();
+
+                let version = match WindowsVersion::parse(&ver_str) {
+                    Some(version) => version,
+                    None => return Err(Error::InvalidWindowsVersion(ver_str)),
+                };
+
+                pfx.set_windows_version(config, version)?;
+            }
+
+            display::hook("running setup hooks");
+            pfx.run_hooks(config, &config.setup_hooks);
+
+            if let Some(run_path) = args.values_of_lossy("run") {
+                let process_name = &run_path[0];
+                display::info(format!("running [{}]", process_name.blue()));
+
+                let opts = LaunchOptions {
+                    force_run_x86: pfx.force_run_x86,
+                    env_vars: pfx.env_vars.clone(),
+                    args: (&run_path[1..]).to_vec(),
+                };
+
+                pfx.launch_process(config, process_name, opts)
+                    .map_err(|err| Error::FailedToRunProcess(err, process_name.clone()))?;
+            }
+
+            Ok(())
+        }
+    }
 
     pub mod add {
         use super::*;
@@ -161,9 +230,9 @@ mod command {
         pub fn manage_new_game(config: &Config, args: &clap::ArgMatches) -> Result<(), Error> {
             let pfx_name = args.value_of("PREFIX").unwrap();
 
-            if let Ok(path) = Prefix::get_data_file(pfx_name) {
-                if path.exists() {
-                    return Err(Error::PrefixAlreadyManaged(pfx_name.into()));
+            if let Ok(pfx) = Prefix::load(pfx_name) {
+                if pfx.game_path.is_some() {
+                    return Err(Error::GameAlreadyAdded);
                 }
             }
 
@@ -179,7 +248,7 @@ mod command {
 
             let prefix = Prefix {
                 name: pfx_name.into(),
-                game_path,
+                game_path: Some(game_path),
                 arch,
                 force_run_x86: args.is_present("force_run_x86"),
                 env_vars: parse_env_var_args(args.values_of_lossy("env_vars")),
@@ -234,20 +303,23 @@ mod command {
                 Err(err) => return Err(err.into()),
             };
 
-            display::info(format!(
-                "running [{}]",
-                prefix.game_path.to_string_lossy().blue()
-            ));
+            let game_path = match &prefix.game_path {
+                Some(p) => p,
+                None => return Err(Error::GamePathNotSet),
+            };
+
+            display::info(format!("running [{}]", game_path.to_string_lossy().blue()));
 
             let launch_opts = LaunchOptions {
                 env_vars: parse_env_var_args(args.values_of_lossy("env_vars")),
                 force_run_x86: prefix.force_run_x86 || args.is_present("force_run_x86"),
+                args: Vec::new(),
             };
 
-            if let Err(err) = prefix.launch_process(config, &prefix.game_path, launch_opts) {
-                return Err(Error::FailedToRunGame(
+            if let Err(err) = prefix.launch_prefix_process(config, &game_path, launch_opts) {
+                return Err(Error::FailedToRunProcess(
                     err,
-                    prefix.game_path.to_string_lossy().to_string(),
+                    game_path.to_string_lossy().to_string(),
                 ));
             }
 
