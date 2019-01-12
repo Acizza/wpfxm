@@ -44,13 +44,13 @@ pub enum Error {
     #[fail(display = "unable to find hook {}", _0)]
     HookNotFound(String),
 
-    #[fail(display = "no executables are being managed by wpfxm for this prefix; try using the scan command first")]
+    #[fail(display = "no executables are being managed by wpfxm for this prefix; try using the add command first")]
     NoSavedExecs,
 
     #[fail(display = "multiple managed executables found, please specify which one to launch with -n")]
     NameNeededToRunExec,
 
-    #[fail(display = "{} is not being managed by wpfxm, please use the scan command first to add it", _0)]
+    #[fail(display = "{} is not being managed by wpfxm, please use the add command first to add it", _0)]
     ExecNotManaged(String),
 
     #[fail(display = "prefix does not exist")]
