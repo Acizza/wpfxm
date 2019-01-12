@@ -26,8 +26,11 @@ pub enum Error {
     #[fail(display = "{} prefix is already being managed", _0)]
     PrefixAlreadyManaged(String),
 
-    #[fail(display = "no games detected in prefix \"{}\"", _0)]
-    NoGamesDetected(String),
+    #[fail(display = "prefix already exists")]
+    PrefixAlreadyExists,
+
+    #[fail(display = "no executables detected in prefix {}", _0)]
+    NoExecsDetected(String),
 
     #[fail(display = "{} prefix is not managed by wpfxm", _0)]
     PrefixNotManaged(String),
@@ -41,11 +44,17 @@ pub enum Error {
     #[fail(display = "unable to find hook {}", _0)]
     HookNotFound(String),
 
-    #[fail(display = "game path not set for prefix; try adding the prefix first")]
-    GamePathNotSet,
+    #[fail(display = "no executables are being managed by wpfxm for this prefix; try using the scan command first")]
+    NoSavedExecs,
 
-    #[fail(display = "game already added to prefix")]
-    GameAlreadyAdded,
+    #[fail(display = "multiple managed executables found, please specify which one to launch with -n")]
+    NameNeededToRunExec,
+
+    #[fail(display = "{} is not being managed by wpfxm, please use the scan command first to add it", _0)]
+    ExecNotManaged(String),
+
+    #[fail(display = "prefix does not exist")]
+    PrefixDoesNotExist,
 
     #[fail(display = "{} is not a valid Windows version; valid options mimic that of winetricks (ex. winxp, win7, win10)", _0)]
     InvalidWindowsVersion(String),

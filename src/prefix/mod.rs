@@ -13,6 +13,13 @@ use std::io::{self, BufRead, BufReader};
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command};
 
+pub fn get_path<S>(config: &Config, name: S) -> PathBuf
+where
+    S: AsRef<str>,
+{
+    config.base_directory.join(name.as_ref())
+}
+
 #[derive(Debug, PartialEq, Serialize, Deserialize, Copy, Clone)]
 pub enum PrefixArch {
     Win32,
@@ -166,13 +173,15 @@ impl<'a> Into<&'a str> for WindowsVersion {
     }
 }
 
+pub type Name = String;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Prefix {
     #[serde(skip)]
     pub name: String,
-    pub game_path: Option<PathBuf>,
     pub arch: PrefixArch,
     pub force_run_x86: bool,
+    pub saved_execs: HashMap<Name, PathBuf>,
     pub env_vars: HashMap<String, String>,
 }
 
@@ -270,7 +279,7 @@ impl Prefix {
     }
 
     pub fn get_prefix_path(&self, config: &Config) -> PathBuf {
-        config.base_directory.join(&self.name)
+        get_path(config, &self.name)
     }
 
     pub fn get_data_dir() -> Result<PathBuf, PrefixError> {
@@ -345,6 +354,8 @@ impl Prefix {
                 display::error(ErrorSeverity::Warning, err);
             }
         }
+
+        display::hook("finished running");
     }
 
     pub fn launch_process<P>(
