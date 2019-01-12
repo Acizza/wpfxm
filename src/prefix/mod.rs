@@ -111,68 +111,6 @@ where
     Ok(arch)
 }
 
-#[derive(Debug, Copy, Clone)]
-pub enum WindowsVersion {
-    Windows31,
-    Windows95,
-    Windows98,
-    Windows2000,
-    Windows2003,
-    WindowsXP,
-    WindowsVista,
-    WindowsServer2008,
-    Windows7,
-    Windows8,
-    Windows81,
-    Windows10,
-}
-
-impl WindowsVersion {
-    pub fn parse<S>(arg: S) -> Option<WindowsVersion>
-    where
-        S: AsRef<str>,
-    {
-        use self::WindowsVersion::*;
-        let arg = arg.as_ref().to_ascii_lowercase();
-
-        match arg.as_ref() {
-            "win31" => Some(Windows31),
-            "win95" => Some(Windows95),
-            "win98" => Some(Windows98),
-            "win2k" => Some(Windows2000),
-            "win2k3" => Some(Windows2003),
-            "winxp" => Some(WindowsXP),
-            "vista" => Some(WindowsVista),
-            "win2k8" => Some(WindowsServer2008),
-            "win7" => Some(Windows7),
-            "win8" => Some(Windows8),
-            "win81" => Some(Windows81),
-            "win10" => Some(Windows10),
-            _ => None,
-        }
-    }
-}
-
-impl<'a> Into<&'a str> for WindowsVersion {
-    fn into(self) -> &'a str {
-        use self::WindowsVersion::*;
-        match self {
-            Windows31 => "win31",
-            Windows95 => "win95",
-            Windows98 => "win98",
-            Windows2000 => "win2k",
-            Windows2003 => "win2k3",
-            WindowsXP => "winxp",
-            WindowsVista => "vista",
-            WindowsServer2008 => "win2k8",
-            Windows7 => "win7",
-            Windows8 => "win8",
-            Windows81 => "win81",
-            Windows10 => "win10",
-        }
-    }
-}
-
 pub type Name = String;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -242,29 +180,6 @@ impl Prefix {
 
         if !status.success() {
             return Err(PrefixError::WineFailedToExecute);
-        }
-
-        Ok(())
-    }
-
-    pub fn set_windows_version(
-        &self,
-        config: &Config,
-        ver: WindowsVersion,
-    ) -> Result<(), PrefixError> {
-        let ver_str: &str = ver.into();
-        display::info(format!("setting Windows version to {}", ver_str.blue()));
-
-        let mut cmd = Command::new("winetricks");
-        cmd.arg(&ver_str);
-        cmd.env("WINEPREFIX", self.get_prefix_path(config));
-
-        let status = cmd
-            .status()
-            .map_err(|_| PrefixError::FailedToSetWindowsVersion)?;
-
-        if !status.success() {
-            return Err(PrefixError::FailedToSetWindowsVersion);
         }
 
         Ok(())

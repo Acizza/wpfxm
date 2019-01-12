@@ -55,9 +55,6 @@ pub enum Error {
 
     #[fail(display = "prefix does not exist")]
     PrefixDoesNotExist,
-
-    #[fail(display = "{} is not a valid Windows version; valid options mimic that of winetricks (ex. winxp, win7, win10)", _0)]
-    InvalidWindowsVersion(String),
 }
 
 impl_err_conv!(Error,
@@ -124,9 +121,6 @@ pub enum PrefixError {
 
     #[fail(display = "Wine failed to run successfully")]
     WineFailedToExecute,
-
-    #[fail(display = "failed to set prefix Windows version")]
-    FailedToSetWindowsVersion,
 }
 
 #[derive(Fail, Debug)]

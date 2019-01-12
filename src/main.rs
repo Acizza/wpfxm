@@ -26,7 +26,6 @@ fn main() {
             (@arg env_vars: -e --env +takes_value +multiple "The environment variables to use for the prefix")
             (@arg run: -r --run +takes_value +multiple "The Wine program to run after prefix creation")
             (@arg force_run_x86: --x86 "Run all applications in this prefix as 32-bit, even if the prefix is 64-bit")
-            (@arg winver: -v --version +takes_value "Set the Windows version of the prefix, via winetricks")
         )
         (@subcommand add =>
             (about: "Scan an existing prefix for an application to manage")
@@ -170,7 +169,7 @@ mod command {
     use crate::display;
     use crate::error::{Error, PrefixError};
     use crate::input;
-    use crate::prefix::{self, LaunchOptions, Prefix, PrefixArch, WindowsVersion};
+    use crate::prefix::{self, LaunchOptions, Prefix, PrefixArch};
     use std::collections::HashMap;
     use std::path::PathBuf;
 
@@ -189,17 +188,6 @@ mod command {
             } else {
                 init_new(pfx_name.into(), config, args)?
             };
-
-            if let Some(ver_str) = args.value_of("winver") {
-                let ver_str = ver_str.to_ascii_lowercase();
-
-                let version = match WindowsVersion::parse(&ver_str) {
-                    Some(version) => version,
-                    None => return Err(Error::InvalidWindowsVersion(ver_str)),
-                };
-
-                pfx.set_windows_version(config, version)?;
-            }
 
             display::hook("running setup hooks");
             pfx.run_hooks(config, &config.setup_hooks);
