@@ -389,6 +389,7 @@ impl Prefix {
         };
 
         cmd.arg(&path);
+        cmd.args(opts.args);
         cmd.current_dir(&exe_dir);
 
         self.attach_cmd_to_prefix(config, &mut cmd);
@@ -411,6 +412,28 @@ impl Prefix {
     {
         let path = self.get_prefix_path(config).join(relative_path);
         self.launch_process(config, path, opts)
+    }
+
+    pub fn launch_non_wine_process<S>(
+        &self,
+        config: &Config,
+        name: S,
+        opts: LaunchOptions,
+    ) -> io::Result<Child>
+    where
+        S: AsRef<str>,
+    {
+        let name = name.as_ref();
+        let mut cmd = Command::new(&name);
+
+        cmd.args(opts.args);
+        self.attach_cmd_to_prefix(config, &mut cmd);
+
+        for (name, value) in opts.env_vars {
+            cmd.env(name, value);
+        }
+
+        cmd.spawn()
     }
 }
 

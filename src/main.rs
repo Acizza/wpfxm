@@ -40,6 +40,13 @@ fn main() {
             (@arg env_vars: -e --env +takes_value +multiple "The environment variables to launch with")
             (@arg force_run_x86: --x86 "Run the application in 32-bit mode")
         )
+        (@subcommand exec =>
+            (about: "Run an arbitrary executable for a prefix managed by wpfxm")
+            (@arg PREFIX: -p --prefix +takes_value +required "The prefix to run the executable in")
+            (@arg ARGS: +takes_value +multiple +required "The executable to launch")
+            (@arg env_vars: -e --env +takes_value +multiple "The environment variables to launch with the executable")
+            (@arg force_run_x86: --x86 "Run the executable in 32-bit mode")
+        )
         (@subcommand hook =>
             (about: "Manage hooks for a prefix")
             (@subcommand run =>
@@ -145,6 +152,7 @@ fn run(args: &clap::ArgMatches) -> Result<(), Error> {
         ("new", Some(args)) => command::new::create_prefix(&config, args),
         ("add", Some(args)) => command::add::manage_new_exec(&config, args),
         ("run", Some(args)) => command::run::run_exec(&config, args),
+        ("exec", Some(args)) => command::exec::run_exec_in_pfx(&config, args),
         ("hook", Some(args)) => command::hook::dispatch(&config, args),
         ("config", Some(args)) => command::config::dispatch(&mut config, args),
         _ => unreachable!(),
@@ -196,17 +204,17 @@ mod command {
             display::hook("running setup hooks");
             pfx.run_hooks(config, &config.setup_hooks);
 
-            if let Some(run_path) = args.values_of_lossy("run") {
-                let process_name = &run_path[0];
+            if let Some(mut run_args) = args.values_of_lossy("run") {
+                let process_name = run_args.remove(0);
                 display::info(format!("running [{}]", process_name.blue()));
 
                 let opts = LaunchOptions {
                     force_run_x86: pfx.force_run_x86,
                     env_vars: pfx.env_vars.clone(),
-                    args: (&run_path[1..]).to_vec(),
+                    args: run_args,
                 };
 
-                pfx.launch_process(config, process_name, opts)
+                pfx.launch_process(config, &process_name, opts)
                     .map_err(|err| Error::FailedToRunProcess(err, process_name.clone()))?;
             }
 
@@ -373,6 +381,42 @@ mod command {
                     exec_path.to_string_lossy().to_string(),
                 ));
             }
+
+            Ok(())
+        }
+    }
+
+    pub mod exec {
+        use super::*;
+
+        pub fn run_exec_in_pfx(config: &Config, args: &clap::ArgMatches) -> Result<(), Error> {
+            let pfx_name = args.value_of("PREFIX").unwrap();
+
+            if !prefix::get_path(config, &pfx_name).exists() {
+                return Err(Error::PrefixDoesNotExist);
+            }
+
+            let pfx = match Prefix::load(pfx_name) {
+                Ok(pfx) => pfx,
+                Err(PrefixError::FailedToReadConfig(_)) => {
+                    return Err(Error::PrefixNotManaged(pfx_name.into()));
+                }
+                Err(err) => return Err(err.into()),
+            };
+
+            let mut run_args = args.values_of_lossy("ARGS").unwrap();
+            let exe_name = run_args.remove(0);
+
+            display::info(format!("running [{}]", exe_name.blue()));
+
+            let opts = LaunchOptions {
+                force_run_x86: args.is_present("force_run_x86"),
+                env_vars: parse_env_var_args(args.values_of_lossy("env_vars")),
+                args: run_args,
+            };
+
+            pfx.launch_non_wine_process(config, &exe_name, opts)
+                .map_err(|err| Error::FailedToRunProcess(err, exe_name))?;
 
             Ok(())
         }
