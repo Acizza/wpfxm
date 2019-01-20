@@ -49,9 +49,9 @@ fn main() {
         (@subcommand hook =>
             (about: "Manage hooks for a prefix")
             (@subcommand run =>
-                (about: "Runs a hook in all managed Wine prefixes (unless -p is specified)")
-                (@arg HOOK: +takes_value +required "The name of the hook")
-                (@arg prefix: -p --prefix +takes_value "The prefix to run the hook in")
+                (about: "Runs hooks globally or in a specified prefix")
+                (@arg HOOKS: +takes_value +multiple +required "The list of hooks to run")
+                (@arg prefix: -p --prefix +takes_value "The prefix to run the hooks in")
             )
         )
         (@subcommand config =>
@@ -395,24 +395,24 @@ mod command {
 
         pub fn dispatch(config: &Config, args: &clap::ArgMatches) -> Result<(), Error> {
             match args.subcommand() {
-                ("run", Some(args)) => run_hook(config, args),
+                ("run", Some(args)) => run_hooks(config, args),
                 _ => unreachable!(),
             }
         }
 
-        fn run_hook(config: &Config, args: &clap::ArgMatches) -> Result<(), Error> {
-            let hook_name = args.value_of("HOOK").unwrap();
+        fn run_hooks(config: &Config, args: &clap::ArgMatches) -> Result<(), Error> {
+            let hooks = args.values_of_lossy("HOOKS").unwrap();
 
             match args.value_of("prefix") {
                 Some(pfx_name) => {
                     let prefix = Prefix::load(pfx_name)?;
-                    prefix.run_hook(hook_name, config)?;
+                    prefix.run_hooks(config, &hooks);
                 }
                 None => {
                     let prefixes = Prefix::load_all()?;
 
                     for prefix in prefixes {
-                        prefix.run_hook(hook_name, config)?;
+                        prefix.run_hooks(config, &hooks);
                     }
                 }
             }

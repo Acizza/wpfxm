@@ -242,19 +242,6 @@ impl Prefix {
         Ok(())
     }
 
-    pub fn run_hook<S>(&self, name: S, config: &Config) -> Result<(), PrefixError>
-    where
-        S: AsRef<str>,
-    {
-        display::hook(format!(
-            "running {} in {} prefix",
-            name.as_ref().green(),
-            self.name.blue()
-        ));
-
-        self.run_hook_silent(name, config)
-    }
-
     pub fn run_hooks(&self, config: &Config, hooks: &[String]) {
         for (i, hook_name) in hooks.iter().enumerate() {
             display::hook(format!(
