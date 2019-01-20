@@ -30,7 +30,7 @@ fn main() {
         (@subcommand add =>
             (about: "Scan an existing prefix for an application to manage")
             (@arg PREFIX: +takes_value +required "The Wine prefix to look for applications in, relative to the base folder")
-            (@arg NAME: -n --name +takes_value +required "The name to refer to the added application")
+            (@arg NAME: +takes_value +required "The name to refer to the added application")
         )
         (@subcommand run =>
             (about: "Run an application in a prefix managed by wpfxm")
@@ -331,7 +331,7 @@ mod command {
             let prefix = match Prefix::load(pfx_name) {
                 Ok(pfx) => pfx,
                 Err(PrefixError::FailedToReadConfig(_)) => {
-                    return Err(Error::PrefixNotManaged(pfx_name.into()))
+                    return Err(Error::PrefixNotManaged(pfx_name.into()));
                 }
                 Err(err) => return Err(err.into()),
             };
