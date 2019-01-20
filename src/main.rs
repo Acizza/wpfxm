@@ -65,11 +65,13 @@ fn main() {
                 (@subcommand setupHooks =>
                     (about: "Set the list of hooks to run when a new prefix is added")
                     (@arg HOOKS: +takes_value +multiple +required "The list of hooks")
+                    (@arg append: -a --append "Append the list of hooks, instead of setting them")
                 )
                 (@subcommand env =>
                     (about: "Set the list of environment variables to use")
                     (@arg VARS: +takes_value +multiple +required "The list of variables, formatted as NAME=VALUE")
                     (@arg prefix: -p --prefix +takes_value "The prefix to apply the variables to")
+                    (@arg append: -a --append "Append the list of environment variables, instead of setting them")
                 )
                 (@subcommand forceRunX86 =>
                     (about: "Force a prefix to always run an application in 32-bit mode")
@@ -77,37 +79,15 @@ fn main() {
                     (@arg ENABLE: +takes_value +required "Possible values are true and false")
                 )
             )
-            (@subcommand add =>
-                (about: "Append a config setting, adding to the previous value")
-                (@subcommand setupHooks =>
-                    (about: "Append the list of hooks to run when a new prefix is added")
-                    (@arg HOOKS: +takes_value +multiple +required "The list of hooks")
-                )
-                (@subcommand env =>
-                    (about: "Append the list of environment variables to use")
-                    (@arg VARS: +takes_value +multiple +required "The list of variables, formatted as NAME=VALUE")
-                    (@arg prefix: -p --prefix +takes_value "The prefix to append the variables to")
-                )
-            )
-            (@subcommand remove =>
-                (about: "Remove a value from a config setting")
+            (@subcommand rm =>
+                (about: "Remove a global or prefix setting")
                 (@subcommand setupHooks =>
                     (about: "Remove setup hooks")
-                    (@arg HOOKS: +takes_value +multiple +required "The list of hooks to remove")
+                    (@arg hooks: +takes_value +multiple "The hooks to remove")
                 )
                 (@subcommand env =>
-                    (about: "Remove environment variables")
-                    (@arg VARS: +takes_value +multiple +required "The list of environment variables to remove")
-                    (@arg prefix: -p --prefix +takes_value "The prefix to remove the variables from")
-                )
-            )
-            (@subcommand clear =>
-                (about: "Clear all values from a config setting")
-                (@subcommand setupHooks =>
-                    (about: "Clear setup hooks")
-                )
-                (@subcommand env =>
-                    (about: "Clear environment variables")
+                    (about: "Remove environment variables globally or from a certain prefix")
+                    (@arg vars: +takes_value +multiple "The variables to clear")
                     (@arg prefix: -p --prefix +takes_value "The prefix to clear the variables from")
                 )
             )
@@ -448,9 +428,7 @@ mod command {
         pub fn dispatch(config: &mut Config, args: &clap::ArgMatches) -> Result<(), Error> {
             match args.subcommand() {
                 ("set", Some(args)) => handle_set(config, args),
-                ("add", Some(args)) => handle_add(config, args),
-                ("remove", Some(args)) => handle_remove(config, args),
-                ("clear", Some(args)) => handle_clear(config, args),
+                ("rm", Some(args)) => handle_rm(config, args),
                 _ => unimplemented!(),
             }
         }
@@ -471,20 +449,35 @@ mod command {
                     let hooks = args.values_of_lossy("HOOKS").unwrap();
                     verify_hooks_exist(&hooks)?;
 
-                    config.setup_hooks = hooks;
+                    if args.is_present("append") {
+                        append_hooks(hooks, &mut config.setup_hooks);
+                    } else {
+                        config.setup_hooks = hooks;
+                    }
+
                     config.save()?;
                 }
                 ("env", Some(args)) => {
                     let env_vars = parse_env_var_args(args.values_of_lossy("VARS"));
+                    let append = args.is_present("append");
+
+                    let mutate_env_vars = |dest: &mut HashMap<String, String>| {
+                        if append {
+                            append_env_vars(env_vars, dest);
+                            return;
+                        }
+
+                        *dest = env_vars;
+                    };
 
                     match args.value_of("prefix") {
                         Some(pfx_name) => {
                             let mut pfx = Prefix::load(pfx_name)?;
-                            pfx.env_vars = env_vars;
+                            mutate_env_vars(&mut pfx.env_vars);
                             pfx.save()?;
                         }
                         None => {
-                            config.global_env_vars = env_vars;
+                            mutate_env_vars(&mut config.global_env_vars);
                             config.save()?;
                         }
                     }
@@ -503,68 +496,36 @@ mod command {
             Ok(())
         }
 
-        fn handle_add(config: &mut Config, args: &clap::ArgMatches) -> Result<(), Error> {
+        fn handle_rm(config: &mut Config, args: &clap::ArgMatches) -> Result<(), Error> {
             match args.subcommand() {
-                ("setupHooks", Some(args)) => {
-                    let hooks = args.values_of_lossy("HOOKS").unwrap();
-                    verify_hooks_exist(&hooks)?;
+                ("setupHooks", Some(_)) => {
+                    let hooks = args.values_of_lossy("hooks").unwrap_or_else(Vec::new);
 
-                    for hook in hooks {
-                        if config.setup_hooks.contains(&hook) {
-                            display::hook(format!(
-                                "{} already in setup hooks, skipping",
-                                hook.green()
-                            ));
-
-                            continue;
-                        }
-
-                        config.setup_hooks.push(hook);
-                    }
-
-                    config.save()?;
-                }
-                ("env", Some(args)) => {
-                    let env_vars = parse_env_var_args(args.values_of_lossy("VARS"));
-
-                    match args.value_of("prefix") {
-                        Some(pfx_name) => {
-                            let mut pfx = Prefix::load(pfx_name)?;
-                            append_env_vars(env_vars, &mut pfx.env_vars);
-                            pfx.save()?;
-                        }
-                        None => {
-                            append_env_vars(env_vars, &mut config.global_env_vars);
-                            config.save()?;
-                        }
-                    }
-                }
-                _ => unimplemented!(),
-            }
-
-            Ok(())
-        }
-
-        fn handle_remove(config: &mut Config, args: &clap::ArgMatches) -> Result<(), Error> {
-            match args.subcommand() {
-                ("setupHooks", Some(args)) => {
-                    let hooks = args.values_of_lossy("HOOKS").unwrap();
-
-                    config.setup_hooks.retain(|setup_hook| {
-                        for hook in &hooks {
-                            if *hook == *setup_hook {
-                                return false;
+                    if hooks.is_empty() {
+                        config.setup_hooks.clear();
+                    } else {
+                        config.setup_hooks.retain(|setup_hook| {
+                            for hook in &hooks {
+                                if *hook == *setup_hook {
+                                    return false;
+                                }
                             }
-                        }
 
-                        true
-                    });
+                            true
+                        });
+                    }
 
                     config.save()?;
                 }
                 ("env", Some(args)) => {
-                    let env_vars = args.values_of_lossy("VARS").unwrap();
+                    let env_vars = args.values_of_lossy("vars").unwrap_or_else(Vec::new);
+
                     let remove_vars = |dest: &mut HashMap<String, String>| {
+                        if env_vars.is_empty() {
+                            dest.clear();
+                            return;
+                        }
+
                         for var in env_vars {
                             dest.remove(&var);
                         }
@@ -588,27 +549,15 @@ mod command {
             Ok(())
         }
 
-        fn handle_clear(config: &mut Config, args: &clap::ArgMatches) -> Result<(), Error> {
-            match args.subcommand() {
-                ("setupHooks", Some(_)) => {
-                    config.setup_hooks.clear();
-                    config.save()?;
+        fn append_hooks(hooks: Vec<String>, dest: &mut Vec<String>) {
+            for hook in hooks {
+                if dest.contains(&hook) {
+                    display::hook(format!("{} already exists, skipping", hook.green()));
+                    continue;
                 }
-                ("env", Some(args)) => match args.value_of("prefix") {
-                    Some(pfx_name) => {
-                        let mut pfx = Prefix::load(pfx_name)?;
-                        pfx.env_vars.clear();
-                        pfx.save()?;
-                    }
-                    None => {
-                        config.global_env_vars.clear();
-                        config.save()?;
-                    }
-                },
-                _ => unimplemented!(),
-            }
 
-            Ok(())
+                dest.push(hook);
+            }
         }
 
         fn append_env_vars(vars: HashMap<String, String>, dest: &mut HashMap<String, String>) {
