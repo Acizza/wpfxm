@@ -41,7 +41,7 @@ fn main() {
         )
         (@subcommand exec =>
             (about: "Run an arbitrary executable for a prefix managed by wpfxm")
-            (@arg PREFIX: -p --prefix +takes_value +required "The prefix to run the executable in")
+            (@arg PREFIX: +takes_value +required "The prefix to run the executable in")
             (@arg ARGS: +takes_value +multiple +required "The executable to launch")
             (@arg env_vars: -e --env +takes_value +multiple "The environment variables to launch with the executable")
             (@arg force_run_x86: --x86 "Run the executable in 32-bit mode")
