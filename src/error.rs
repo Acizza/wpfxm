@@ -26,9 +26,6 @@ pub enum Error {
     #[fail(display = "{} prefix is already being managed", _0)]
     PrefixAlreadyManaged(String),
 
-    #[fail(display = "prefix already exists")]
-    PrefixAlreadyExists,
-
     #[fail(display = "no executables detected in prefix {}", _0)]
     NoExecsDetected(String),
 

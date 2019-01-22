@@ -20,6 +20,24 @@ where
     config.base_directory.join(name.as_ref())
 }
 
+pub fn exists_and_valid<P>(path: P) -> bool
+where
+    P: AsRef<Path>,
+{
+    let sys_file = path.as_ref().join("system.reg");
+
+    let metadata = match fs::metadata(sys_file) {
+        Ok(m) => m,
+        Err(_) => return false,
+    };
+
+    if metadata.len() == 0 || !metadata.is_file() {
+        return false;
+    }
+
+    true
+}
+
 #[derive(Debug, PartialEq, Serialize, Deserialize, Copy, Clone)]
 pub enum PrefixArch {
     Win32,

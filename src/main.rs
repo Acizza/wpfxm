@@ -21,7 +21,6 @@ fn main() {
         (@subcommand new =>
             (about: "Create a new Wine prefix through wpfxm")
             (@arg PREFIX: +takes_value +required "The name of the Wine prefix")
-            (@arg existing: --existing "If specified, wpfxm will attempt to add an exisitng prefix, instead of create one")
             (@arg arch: -a --arch +takes_value default_value("win64") "The architecture to use for the prefix")
             (@arg env_vars: -e --env +takes_value +multiple "The environment variables to use for the prefix")
             (@arg run: -r --run +takes_value +multiple "The Wine program to run after prefix creation")
@@ -158,16 +157,7 @@ mod command {
 
         pub fn create_prefix(config: &Config, args: &clap::ArgMatches) -> Result<(), Error> {
             let pfx_name = args.value_of("PREFIX").unwrap();
-
-            if Prefix::get_data_file(&pfx_name)?.exists() {
-                return Err(Error::PrefixAlreadyManaged(pfx_name.into()));
-            }
-
-            let pfx = if args.is_present("existing") {
-                init_existing(pfx_name.into(), config, args)?
-            } else {
-                init_new(pfx_name.into(), config, args)?
-            };
+            let pfx = load_or_create_pfx(config, args, pfx_name)?;
 
             display::hook("running setup hooks");
             pfx.run_hooks(config, &config.setup_hooks);
@@ -189,63 +179,56 @@ mod command {
             Ok(())
         }
 
-        fn init_existing(
-            name: String,
+        fn load_or_create_pfx<S>(
             config: &Config,
             args: &clap::ArgMatches,
-        ) -> Result<Prefix, Error> {
-            if !prefix::get_path(config, &name).exists() {
-                return Err(Error::PrefixDoesNotExist);
+            pfx_name: S,
+        ) -> Result<Prefix, Error>
+        where
+            S: AsRef<str>,
+        {
+            let pfx_name = pfx_name.as_ref();
+            let pfx_path = prefix::get_path(config, &pfx_name);
+            let pfx_exists = prefix::exists_and_valid(&pfx_path);
+            let pfx_data_exists = Prefix::get_data_file(pfx_name)
+                .map(|f| f.exists())
+                .unwrap_or(false);
+
+            if pfx_exists && pfx_data_exists {
+                return Err(Error::PrefixAlreadyManaged(pfx_name.into()));
             }
 
-            display::info(format!("adding existing prefix {}", name.blue()));
+            let pfx = if pfx_data_exists {
+                display::info("using existing prefix save data");
+                Prefix::load(pfx_name)?
+            } else {
+                display::info("creating new prefix save data");
 
-            let arch = match args.value_of("arch").and_then(PrefixArch::parse) {
-                Some(arch) => arch,
-                None => {
-                    let path = prefix::get_path(config, &name);
-                    prefix::detect_arch(path)?
-                }
-            };
-
-            let pfx = Prefix {
-                name,
-                arch,
-                force_run_x86: args.is_present("force_run_x86"),
-                saved_execs: HashMap::new(),
-                env_vars: parse_env_var_args(args.values_of_lossy("env_vars")),
-            };
-
-            pfx.save()?;
-
-            Ok(pfx)
-        }
-
-        fn init_new(
-            name: String,
-            config: &Config,
-            args: &clap::ArgMatches,
-        ) -> Result<Prefix, Error> {
-            if prefix::get_path(config, &name).exists() {
-                return Err(Error::PrefixAlreadyExists);
-            }
-
-            display::info(format!("creating prefix {}", name.blue()));
-
-            let pfx = Prefix {
-                name,
-                arch: {
+                let arch = if pfx_exists {
+                    prefix::detect_arch(&pfx_path)?
+                } else {
                     args.value_of("arch")
                         .and_then(PrefixArch::parse)
                         .unwrap_or_default()
-                },
-                force_run_x86: args.is_present("force_run_x86"),
-                saved_execs: HashMap::new(),
-                env_vars: parse_env_var_args(args.values_of_lossy("env_vars")),
+                };
+
+                Prefix {
+                    name: pfx_name.into(),
+                    arch,
+                    force_run_x86: args.is_present("force_run_x86"),
+                    saved_execs: HashMap::new(),
+                    env_vars: parse_env_var_args(args.values_of_lossy("env_vars")),
+                }
             };
 
-            pfx.create(config)?;
-            pfx.save()?;
+            if !pfx_exists {
+                display::info("creating prefix");
+                pfx.create(config)?;
+            }
+
+            if !pfx_data_exists {
+                pfx.save()?;
+            }
 
             Ok(pfx)
         }
