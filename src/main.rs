@@ -25,6 +25,7 @@ fn main() {
             (@arg env_vars: -e --env +takes_value +multiple "The environment variables to use for the prefix")
             (@arg run: -r --run +takes_value +multiple "The Wine program to run after prefix creation")
             (@arg force_run_x86: --x86 "Run all applications in this prefix as 32-bit, even if the prefix is 64-bit")
+            (@arg path: -p --path +takes_value "The absolute path of the prefix. This is useful for prefixes that you want to manage outside of the base directory.")
         )
         (@subcommand add =>
             (about: "Scan an existing prefix for an application to manage")
@@ -127,7 +128,7 @@ fn run(args: &clap::ArgMatches) -> Result<(), Error> {
     };
 
     match args.subcommand() {
-        ("new", Some(args)) => command::new::create_prefix(&config, args),
+        ("new", Some(args)) => command::new::create_prefix(&mut config, args),
         ("add", Some(args)) => command::add::manage_new_exec(&config, args),
         ("run", Some(args)) => command::run::run_exec(&config, args),
         ("exec", Some(args)) => command::exec::run_exec_in_pfx(&config, args),
@@ -155,8 +156,14 @@ mod command {
     pub mod new {
         use super::*;
 
-        pub fn create_prefix(config: &Config, args: &clap::ArgMatches) -> Result<(), Error> {
+        pub fn create_prefix(config: &mut Config, args: &clap::ArgMatches) -> Result<(), Error> {
             let pfx_name = args.value_of("PREFIX").unwrap();
+
+            if let Some(path) = args.value_of("path") {
+                config.abs_prefix_paths.insert(pfx_name.into(), path.into());
+                config.save()?;
+            }
+
             let pfx = load_or_create_pfx(config, args, pfx_name)?;
 
             display::hook("running setup hooks");

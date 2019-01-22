@@ -17,7 +17,12 @@ pub fn get_path<S>(config: &Config, name: S) -> PathBuf
 where
     S: AsRef<str>,
 {
-    config.base_directory.join(name.as_ref())
+    let name = name.as_ref();
+
+    match config.abs_prefix_paths.get(name) {
+        Some(path) => path.clone(),
+        None => config.base_directory.join(name),
+    }
 }
 
 pub fn exists_and_valid<P>(path: P) -> bool

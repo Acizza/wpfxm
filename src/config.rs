@@ -15,6 +15,8 @@ pub struct Config {
     pub setup_hooks: Vec<Filename>,
     #[serde(default)]
     pub global_env_vars: HashMap<String, String>,
+    #[serde(default)]
+    pub abs_prefix_paths: HashMap<String, PathBuf>,
 }
 
 impl Config {
@@ -58,6 +60,7 @@ impl Default for Config {
             base_directory: default_base_directory(),
             setup_hooks: Vec::new(),
             global_env_vars: HashMap::new(),
+            abs_prefix_paths: HashMap::new(),
         }
     }
 }
