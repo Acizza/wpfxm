@@ -54,6 +54,12 @@ fn main() {
                 (@arg prefix: -p --prefix +takes_value "The prefix to run the hooks in")
             )
         )
+        (@subcommand rm =>
+            (about: "Remove a prefix managed by wpfxm")
+            (@arg PREFIX: +takes_value +required "The name of the prefix to remove")
+            (@arg data_only: -d --data "Remove the prefix save data, but keep the prefix itself")
+            (@arg pfx_only: -p --prefix "Remove the prefix, but keep the save data")
+        )
         (@subcommand cfg =>
             (about: "Manage configuration globally or for a specific prefix")
             (@subcommand set =>
@@ -133,6 +139,7 @@ fn run(args: &clap::ArgMatches) -> Result<(), Error> {
         ("run", Some(args)) => command::run::run_exec(&config, args),
         ("exec", Some(args)) => command::exec::run_exec_in_pfx(&config, args),
         ("hook", Some(args)) => command::hook::dispatch(&config, args),
+        ("rm", Some(args)) => command::rm::remove_prefix(&mut config, args),
         ("cfg", Some(args)) => command::cfg::dispatch(&mut config, args),
         _ => unreachable!(),
     }
@@ -406,6 +413,70 @@ mod command {
                     }
                 }
             }
+
+            Ok(())
+        }
+    }
+
+    pub mod rm {
+        use super::*;
+        use display::ErrorSeverity;
+        use input::Answer;
+        use std::fs;
+
+        pub fn remove_prefix(config: &mut Config, args: &clap::ArgMatches) -> Result<(), Error> {
+            let pfx_name = args.value_of("PREFIX").unwrap();
+            let pfx_data_path = Prefix::get_data_file(&pfx_name)?;
+
+            let data_only = args.is_present("data_only");
+
+            if data_only && !pfx_data_path.exists() {
+                return Err(Error::PrefixDataDoesNotExist);
+            }
+
+            let pfx_only = args.is_present("pfx_only");
+            let pfx_path = prefix::get_path(config, &pfx_name);
+
+            if pfx_only && !pfx_path.exists() {
+                return Err(Error::PrefixDoesNotExist);
+            }
+
+            display::input("paths to be deleted:");
+
+            if !pfx_only {
+                display::input(format!("save data: {}", pfx_data_path.display()));
+            }
+
+            if !data_only {
+                display::input(format!("prefix: {}", pfx_path.display()));
+            }
+
+            display::input("is this okay? (Y/n)");
+
+            if input::read_yn(Answer::Yes)? == Answer::No {
+                return Ok(());
+            }
+
+            if !pfx_only {
+                if let Err(err) = fs::remove_file(pfx_data_path) {
+                    display::error(
+                        ErrorSeverity::Warning,
+                        Error::FailedToRemovePath(err, "data file"),
+                    );
+                }
+            }
+
+            if !data_only {
+                if let Err(err) = fs::remove_dir_all(pfx_path) {
+                    display::error(
+                        ErrorSeverity::Warning,
+                        Error::FailedToRemovePath(err, "prefix"),
+                    );
+                }
+            }
+
+            config.abs_prefix_paths.remove(pfx_name);
+            config.save()?;
 
             Ok(())
         }

@@ -52,6 +52,12 @@ pub enum Error {
 
     #[fail(display = "prefix does not exist")]
     PrefixDoesNotExist,
+
+    #[fail(display = "prefix data does not exist")]
+    PrefixDataDoesNotExist,
+
+    #[fail(display = "failed to remove {}", _1)]
+    FailedToRemovePath(#[cause] std::io::Error, &'static str),
 }
 
 impl_err_conv!(Error,
@@ -122,6 +128,9 @@ pub enum PrefixError {
 
 #[derive(Fail, Debug)]
 pub enum InputError {
+    #[fail(display = "io error")]
+    Io(#[cause] std::io::Error),
+
     #[fail(display = "failed to read line")]
     ReadFailed(#[cause] ::std::io::Error),
 
@@ -131,3 +140,7 @@ pub enum InputError {
     #[fail(display = "no list items were provided")]
     NoItemsProvided,
 }
+
+impl_err_conv!(InputError,
+    std::io::Error => Io,
+);
