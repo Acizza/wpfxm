@@ -23,7 +23,7 @@ fn main() {
             (@arg PREFIX: +takes_value +required "The name of the Wine prefix")
             (@arg arch: -a --arch +takes_value default_value("win64") "The architecture to use for the prefix")
             (@arg env_vars: -e --env +takes_value +multiple "The environment variables to use for the prefix")
-            (@arg run: -r --run +takes_value +multiple "The Wine program to run after prefix creation")
+            (@arg run: -r --run +takes_value +multiple "The program to run after prefix creation")
             (@arg force_run_x86: --x86 "Run all applications in this prefix as 32-bit, even if the prefix is 64-bit")
             (@arg path: -p --path +takes_value "The absolute path of the prefix. This is useful for prefixes that you want to manage outside of the base directory.")
         )
@@ -33,7 +33,7 @@ fn main() {
             (@arg NAME: +takes_value +required "The name to refer to the added application")
         )
         (@subcommand run =>
-            (about: "Run an application in a prefix managed by wpfxm")
+            (about: "Run a saved application in a prefix managed by wpfxm")
             (@arg PREFIX: +takes_value +required "The name of the Wine prefix")
             (@arg name: -n --name +takes_value "The name of the application to run; can be omitted if there is only one application managed")
             (@arg env_vars: -e --env +takes_value +multiple "The environment variables to launch with")
@@ -186,7 +186,7 @@ mod command {
                     args: run_args,
                 };
 
-                pfx.launch_process(config, &process_name, opts)
+                pfx.launch_non_wine_process(config, &process_name, opts)
                     .map_err(|err| Error::FailedToRunProcess(err, process_name.clone()))?;
             }
 
