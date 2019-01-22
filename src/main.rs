@@ -45,7 +45,6 @@ fn main() {
             (@arg PREFIX: +takes_value +required "The prefix to run the executable in")
             (@arg ARGS: +takes_value +multiple +required "The executable to launch")
             (@arg env_vars: -e --env +takes_value +multiple "The environment variables to launch with the executable")
-            (@arg force_run_x86: --x86 "Run the executable in 32-bit mode")
         )
         (@subcommand hook =>
             (about: "Manage hooks for a prefix")
@@ -384,7 +383,7 @@ mod command {
             display::info(format!("running [{}]", exe_name.blue()));
 
             let opts = LaunchOptions {
-                force_run_x86: args.is_present("force_run_x86"),
+                force_run_x86: false, // This doesn't matter when running a non-Wine process
                 env_vars: parse_env_var_args(args.values_of_lossy("env_vars")),
                 args: run_args,
             };
