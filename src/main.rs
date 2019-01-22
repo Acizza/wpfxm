@@ -54,7 +54,7 @@ fn main() {
                 (@arg prefix: -p --prefix +takes_value "The prefix to run the hooks in")
             )
         )
-        (@subcommand config =>
+        (@subcommand cfg =>
             (about: "Manage configuration globally or for a specific prefix")
             (@subcommand set =>
                 (about: "Set a config setting, overwriting the previous value")
@@ -133,7 +133,7 @@ fn run(args: &clap::ArgMatches) -> Result<(), Error> {
         ("run", Some(args)) => command::run::run_exec(&config, args),
         ("exec", Some(args)) => command::exec::run_exec_in_pfx(&config, args),
         ("hook", Some(args)) => command::hook::dispatch(&config, args),
-        ("config", Some(args)) => command::config::dispatch(&mut config, args),
+        ("cfg", Some(args)) => command::cfg::dispatch(&mut config, args),
         _ => unreachable!(),
     }
 }
@@ -411,7 +411,7 @@ mod command {
         }
     }
 
-    pub mod config {
+    pub mod cfg {
         use super::*;
         use crate::prefix::Hook;
 
