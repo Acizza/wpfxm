@@ -26,6 +26,7 @@ fn main() {
             (@arg run: -r --run +takes_value +multiple "The program to run after prefix creation")
             (@arg force_run_x86: --x86 "Run all applications in this prefix as 32-bit, even if the prefix is 64-bit")
             (@arg path: -p --path +takes_value "The absolute path of the prefix. This is useful for prefixes that you want to manage outside of the base directory.")
+            (@arg explicit_hooks: --explicithooks "Only run hooks when called directly via the hook run command. This will avoid the setup hooks running on this prefix, and will be exempt from generic hook run calls.")
         )
         (@subcommand add =>
             (about: "Scan an existing prefix for an application to manage")
@@ -82,6 +83,11 @@ fn main() {
                 (@subcommand forceRunX86 =>
                     (about: "Force a prefix to always run an application in 32-bit mode")
                     (@arg PREFIX: +takes_value +required "The prefix to enable the setting in")
+                    (@arg ENABLE: +takes_value +required "Possible values are true and false")
+                )
+                (@subcommand explicitHooks =>
+                    (about: "Set whether or not hooks will be executed for the specified prefix during generic hook run calls")
+                    (@arg PREFIX: +takes_value +required "The prefix to apply the setting to")
                     (@arg ENABLE: +takes_value +required "Possible values are true and false")
                 )
             )
@@ -173,8 +179,10 @@ mod command {
 
             let pfx = load_or_create_pfx(config, args, pfx_name)?;
 
-            display::hook("running setup hooks");
-            pfx.run_hooks(config, &config.setup_hooks);
+            if !args.is_present("explicit_hooks") {
+                display::hook("running setup hooks");
+                pfx.run_hooks(config, &config.setup_hooks);
+            }
 
             if let Some(mut run_args) = args.values_of_lossy("run") {
                 let process_name = run_args.remove(0);
@@ -228,6 +236,7 @@ mod command {
 
                 Prefix {
                     name: pfx_name.into(),
+                    run_hooks_explicitly: args.is_present("explicit_hooks"),
                     arch,
                     force_run_x86: args.is_present("force_run_x86"),
                     saved_execs: HashMap::new(),
@@ -409,6 +418,10 @@ mod command {
                     let prefixes = Prefix::load_all()?;
 
                     for prefix in prefixes {
+                        if prefix.run_hooks_explicitly {
+                            continue;
+                        }
+
                         prefix.run_hooks(config, &hooks);
                     }
                 }
@@ -549,6 +562,14 @@ mod command {
 
                     let mut pfx = Prefix::load(pfx_name)?;
                     pfx.force_run_x86 = enable;
+                    pfx.save()?;
+                }
+                ("explicitHooks", Some(args)) => {
+                    let pfx_name = args.value_of("PREFIX").unwrap();
+                    let enable = parse_true_false_arg(args.value_of("ENABLE").unwrap());
+
+                    let mut pfx = Prefix::load(pfx_name)?;
+                    pfx.run_hooks_explicitly = enable;
                     pfx.save()?;
                 }
                 _ => unimplemented!(),

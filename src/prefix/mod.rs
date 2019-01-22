@@ -140,6 +140,7 @@ pub type Name = String;
 pub struct Prefix {
     #[serde(skip)]
     pub name: String,
+    pub run_hooks_explicitly: bool,
     pub arch: PrefixArch,
     pub force_run_x86: bool,
     pub saved_execs: HashMap<Name, PathBuf>,
