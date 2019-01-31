@@ -36,7 +36,7 @@ fn main() {
         (@subcommand run =>
             (about: "Run a saved application in a prefix managed by wpfxm")
             (@arg PREFIX: +takes_value +required "The name of the Wine prefix")
-            (@arg name: -n --name +takes_value "The name of the application to run; can be omitted if there is only one application managed")
+            (@arg name: +takes_value "The name of the application to run; can be omitted if there is only one application managed")
             (@arg env_vars: -e --env +takes_value +multiple "The environment variables to launch with")
             (@arg force_run_x86: --x86 "Run the application in 32-bit mode")
         )
