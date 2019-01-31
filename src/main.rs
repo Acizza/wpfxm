@@ -66,6 +66,10 @@ fn main() {
             (@arg data_only: -d --data "Remove the prefix save data, but keep the prefix itself")
             (@arg pfx_only: -p --prefix "Remove the prefix, but keep the save data")
         )
+        (@subcommand clean =>
+            (about: "Removes unused prefixes and applications")
+            (@arg prefix: +takes_value "The prefix to perform the cleanup in")
+        )
         (@subcommand cfg =>
             (about: "Manage configuration globally or for a specific prefix")
             (@subcommand set =>
@@ -152,6 +156,7 @@ fn run(args: &clap::ArgMatches) -> Result<(), Error> {
         ("hook", Some(args)) => command::hook::run(&config, args)?,
         ("ls", Some(args)) => command::ls::run(args)?,
         ("rm", Some(args)) => command::rm::run(&mut config, args)?,
+        ("clean", Some(args)) => command::clean::run(&mut config, args)?,
         ("cfg", Some(args)) => command::cfg::run(&mut config, args)?,
         _ => unreachable!(),
     }

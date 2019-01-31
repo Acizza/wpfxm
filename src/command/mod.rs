@@ -1,5 +1,6 @@
 pub mod add;
 pub mod cfg;
+pub mod clean;
 pub mod exec;
 pub mod hook;
 pub mod ls;
