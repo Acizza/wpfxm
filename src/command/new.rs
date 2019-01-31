@@ -4,12 +4,14 @@ use crate::error::CommandError;
 use crate::prefix::{self, LaunchOptions, Prefix, PrefixArch};
 use colored::Colorize;
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 pub fn run(config: &mut Config, args: &clap::ArgMatches) -> Result<(), CommandError> {
     let pfx_name = args.value_of("PREFIX").unwrap();
 
     if let Some(path) = args.value_of("path") {
-        config.abs_prefix_paths.insert(pfx_name.into(), path.into());
+        let path = PathBuf::from(path).join(pfx_name);
+        config.abs_prefix_paths.insert(pfx_name.into(), path);
         config.save()?;
     }
 
