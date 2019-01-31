@@ -55,7 +55,7 @@ An example would be to automatically fix Unreal Engine 4 games so they can launc
 
 New hooks can be placed in `/home/<USERNAME>/.config/wpfxm/hooks/`. Keep in mind that you must mark them as executable with `chmod +x <FILE>`.
 
-You can register a hook as a "setup" hook that runs when new prefixes are created via the [cfg](#Global-And-Prefix-Configuration) command, or run them with the `hook run` command.
+You can register a hook as a "setup" hook that runs when new prefixes are created via the [cfg](#global-and-prefix-configuration) command, or run them with the `hook run` command.
 
 With the `hook run` command, the specified hooks will run in all prefixes by default, but you can restrict them to run in only one prefix with the `-p` flag.
 
