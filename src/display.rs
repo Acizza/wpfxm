@@ -71,3 +71,31 @@ where
 {
     println!("{}: {}", "hook".green(), msg.as_ref());
 }
+
+pub fn prfx<S>(msg: S)
+where
+    S: AsRef<str>,
+{
+    println!("{}: {}", "prfx".cyan(), msg.as_ref());
+}
+
+pub fn env<S>(msg: S)
+where
+    S: AsRef<str>,
+{
+    println!("{}:  {}", "env".cyan(), msg.as_ref());
+}
+
+pub fn exec<S>(msg: S)
+where
+    S: AsRef<str>,
+{
+    println!("{}: {}", "exec".cyan(), msg.as_ref());
+}
+
+pub fn conf<S>(msg: S)
+where
+    S: AsRef<str>,
+{
+    println!("{}: {}", "conf".cyan(), msg.as_ref());
+}

@@ -55,6 +55,10 @@ fn main() {
                 (@arg prefix: -p --prefix +takes_value "The prefix to run the hooks in")
             )
         )
+        (@subcommand ls =>
+            (about: "Lists prefixes and applications managed by wpfxm")
+            (@arg prefix: +takes_value "The prefix to show")
+        )
         (@subcommand rm =>
             (about: "Remove a prefix managed by wpfxm")
             (@arg PREFIX: +takes_value +required "The name of the prefix to remove")
@@ -145,6 +149,7 @@ fn run(args: &clap::ArgMatches) -> Result<(), Error> {
         ("run", Some(args)) => command::run::run_exec(&config, args),
         ("exec", Some(args)) => command::exec::run_exec_in_pfx(&config, args),
         ("hook", Some(args)) => command::hook::dispatch(&config, args),
+        ("ls", Some(args)) => command::ls::display(args),
         ("rm", Some(args)) => command::rm::remove_prefix(&mut config, args),
         ("cfg", Some(args)) => command::cfg::dispatch(&mut config, args),
         _ => unreachable!(),
@@ -444,6 +449,47 @@ mod command {
             }
 
             Ok(())
+        }
+    }
+
+    pub mod ls {
+        use super::*;
+
+        pub fn display(args: &clap::ArgMatches) -> Result<(), Error> {
+            match args.value_of("prefix") {
+                Some(pfx_name) => {
+                    let pfx = Prefix::load(pfx_name)?;
+                    show_prefix(&pfx);
+                }
+                None => {
+                    for pfx in Prefix::load_all()? {
+                        show_prefix(&pfx);
+                        println!();
+                    }
+                }
+            }
+
+            Ok(())
+        }
+
+        fn show_prefix(pfx: &Prefix) {
+            display::prfx(format!("{} data:", pfx.name.blue()));
+
+            for name in pfx.saved_execs.keys() {
+                display::exec(format!("{}", name.magenta()));
+            }
+
+            for (name, value) in &pfx.env_vars {
+                display::env(format!("{} = {}", name.magenta(), value.magenta()));
+            }
+
+            if pfx.force_run_x86 {
+                display::conf(format!("{}", "force 32-bit mode enabled".magenta()));
+            }
+
+            if pfx.run_hooks_explicitly {
+                display::conf(format!("{}", "hooks must be run manually".magenta()));
+            }
         }
     }
 
