@@ -21,9 +21,10 @@ fn main() {
         (@subcommand new =>
             (about: "Create a new Wine prefix through wpfxm")
             (@arg PREFIX: +takes_value +required "The name of the Wine prefix")
-            (@arg arch: -a --arch +takes_value default_value("win64") "The architecture to use for the prefix")
+            (@arg arch: --arch +takes_value "The architecture to use for the prefix")
             (@arg env_vars: -e --env +takes_value +multiple "The environment variables to use for the prefix")
             (@arg run: -r --run +takes_value +multiple "The program to run after prefix creation")
+            (@arg add: -a --add +takes_value +required "Shortcut for running the add command after running the command specified by -r. This is ignored if -r is not specified")
             (@arg force_run_x86: --x86 "Run all applications in this prefix as 32-bit, even if the prefix is 64-bit")
             (@arg path: -p --path +takes_value "The absolute path of the prefix. This is useful for prefixes that you want to manage outside of the base directory.")
             (@arg explicit_hooks: --explicithooks "Only run hooks when called directly via the hook run command. This will avoid the setup hooks running on this prefix, and will be exempt from generic hook run calls.")
@@ -140,7 +141,7 @@ fn run(args: &clap::ArgMatches) -> Result<(), Error> {
 
     match args.subcommand() {
         ("new", Some(args)) => command::new::create_prefix(&mut config, args),
-        ("add", Some(args)) => command::add::manage_new_exec(&config, args),
+        ("add", Some(args)) => command::add::manage_new_from_cmd(&config, args),
         ("run", Some(args)) => command::run::run_exec(&config, args),
         ("exec", Some(args)) => command::exec::run_exec_in_pfx(&config, args),
         ("hook", Some(args)) => command::hook::dispatch(&config, args),
@@ -193,8 +194,14 @@ mod command {
                     args: run_args,
                 };
 
-                pfx.launch_non_wine_process(config, &process_name, opts)
+                let mut process = pfx
+                    .launch_non_wine_process(config, &process_name, opts)
                     .map_err(|err| Error::FailedToRunProcess(err, process_name.clone()))?;
+
+                if let Some(exec_name) = args.value_of("add") {
+                    process.wait().ok();
+                    super::add::manage_new_exec(config, pfx_name, exec_name)?;
+                }
             }
 
             Ok(())
@@ -259,8 +266,18 @@ mod command {
     pub mod add {
         use super::*;
 
-        pub fn manage_new_exec(config: &Config, args: &clap::ArgMatches) -> Result<(), Error> {
+        pub fn manage_new_from_cmd(config: &Config, args: &clap::ArgMatches) -> Result<(), Error> {
             let pfx_name = args.value_of("PREFIX").unwrap();
+            let exec_name = args.value_of("NAME").unwrap();
+
+            manage_new_exec(config, pfx_name, exec_name)
+        }
+
+        pub fn manage_new_exec<S>(config: &Config, pfx_name: S, exec_name: S) -> Result<(), Error>
+        where
+            S: AsRef<str>,
+        {
+            let pfx_name = pfx_name.as_ref();
 
             if !Prefix::get_data_file(&pfx_name)?.exists() {
                 return Err(Error::PrefixNotManaged(pfx_name.into()));
@@ -268,7 +285,7 @@ mod command {
 
             let mut prefix = Prefix::load(pfx_name)?;
 
-            let exec_name = args.value_of("NAME").unwrap();
+            let exec_name = exec_name.as_ref();
             let exec_path = select_exec(config, &prefix)?;
 
             prefix
