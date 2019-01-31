@@ -23,47 +23,15 @@ pub enum Error {
     #[fail(display = "input error")]
     Input(#[cause] InputError),
 
-    #[fail(display = "{} prefix is already being managed", _0)]
-    PrefixAlreadyManaged(String),
-
-    #[fail(display = "no executables detected in prefix {}", _0)]
-    NoExecsDetected(String),
-
-    #[fail(display = "{} prefix is not managed by wpfxm", _0)]
-    PrefixNotManaged(String),
-
-    #[fail(display = "failed to run [{}]", _1)]
-    FailedToRunProcess(#[cause] std::io::Error, String),
-
-    #[fail(display = "path doesn't exist: {}", _0)]
-    PathDoesntExist(String),
-
-    #[fail(display = "unable to find hook {}", _0)]
-    HookNotFound(String),
-
-    #[fail(display = "no executables are being managed by wpfxm for this prefix; try using the add command first")]
-    NoSavedExecs,
-
-    #[fail(display = "multiple managed executables found, please specify which one to launch with -n")]
-    NameNeededToRunExec,
-
-    #[fail(display = "{} is not being managed by wpfxm, please use the add command first to add it", _0)]
-    ExecNotManaged(String),
-
-    #[fail(display = "prefix does not exist")]
-    PrefixDoesNotExist,
-
-    #[fail(display = "prefix data does not exist")]
-    PrefixDataDoesNotExist,
-
-    #[fail(display = "failed to remove {}", _1)]
-    FailedToRemovePath(#[cause] std::io::Error, &'static str),
+    #[fail(display = "command error")]
+    Command(#[cause] CommandError),
 }
 
 impl_err_conv!(Error,
     ConfigError => Config,
     PrefixError => Prefix,
     InputError => Input,
+    CommandError => Command,
 );
 
 #[derive(Fail, Debug)]
@@ -143,4 +111,58 @@ pub enum InputError {
 
 impl_err_conv!(InputError,
     std::io::Error => Io,
+);
+
+#[derive(Fail, Debug)]
+pub enum CommandError {
+    #[fail(display = "config error")]
+    Config(#[cause] ConfigError),
+
+    #[fail(display = "prefix error")]
+    Prefix(#[cause] PrefixError),
+
+    #[fail(display = "input error")]
+    Input(#[cause] InputError),
+
+    #[fail(display = "failed to run [{}]", _1)]
+    FailedToRunProcess(#[cause] std::io::Error, String),
+
+    #[fail(display = "{} prefix is already being managed", _0)]
+    PrefixAlreadyManaged(String),
+
+    #[fail(display = "{} prefix is not managed by wpfxm", _0)]
+    PrefixNotManaged(String),
+
+    #[fail(display = "no executables detected in prefix {}", _0)]
+    NoExecsDetected(String),
+
+    #[fail(display = "no executables are being managed by wpfxm for this prefix; try using the add command first")]
+    NoSavedExecs,
+
+    #[fail(display = "multiple managed executables found, please specify which one to launch with -n")]
+    NameNeededToRunExec,
+
+    #[fail(display = "{} is not being managed by wpfxm, please use the add command first to add it", _0)]
+    ExecNotManaged(String),
+
+    #[fail(display = "prefix does not exist")]
+    PrefixDoesNotExist,
+
+    #[fail(display = "prefix data does not exist")]
+    PrefixDataDoesNotExist,
+
+    #[fail(display = "failed to remove {}", _1)]
+    FailedToRemovePath(#[cause] std::io::Error, &'static str),
+
+    #[fail(display = "path doesn't exist: {}", _0)]
+    PathDoesntExist(String),
+
+    #[fail(display = "unable to find hook {}", _0)]
+    HookNotFound(String),
+}
+
+impl_err_conv!(CommandError,
+    ConfigError => Config,
+    PrefixError => Prefix,
+    InputError => Input,
 );
