@@ -24,7 +24,7 @@ fn main() {
             (@arg arch: --arch +takes_value "The architecture to use for the prefix")
             (@arg env_vars: -e --env +takes_value +multiple "The environment variables to use for the prefix")
             (@arg run: -r --run +takes_value +multiple "The program to run after prefix creation")
-            (@arg add: -a --add +takes_value +required "Shortcut for running the add command after running the command specified by -r. This is ignored if -r is not specified")
+            (@arg add: -a --add +takes_value "Shortcut for running the add command after running the command specified by -r. This is ignored if -r is not specified")
             (@arg force_run_x86: --x86 "Run all applications in this prefix as 32-bit, even if the prefix is 64-bit")
             (@arg path: -p --path +takes_value "The absolute path of the prefix. This is useful for prefixes that you want to manage outside of the base directory.")
             (@arg explicit_hooks: --explicithooks "Only run hooks when called directly via the hook run command. This will avoid the setup hooks running on this prefix, and will be exempt from generic hook run calls.")
