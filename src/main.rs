@@ -33,7 +33,7 @@ fn main() {
         (@subcommand add =>
             (about: "Scan an existing prefix for an application to manage")
             (@arg PREFIX: +takes_value +required "The Wine prefix to look for applications in, relative to the base folder")
-            (@arg NAME: +takes_value +required "The name to refer to the added application")
+            (@arg name: +takes_value "The name to refer to the added application. Uses the name of the prefix if not specified")
         )
         (@subcommand run =>
             (about: "Run a saved application in a prefix managed by wpfxm")

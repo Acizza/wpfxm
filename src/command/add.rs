@@ -8,7 +8,7 @@ use std::path::PathBuf;
 
 pub fn run(config: &Config, args: &clap::ArgMatches) -> Result<(), CommandError> {
     let pfx_name = args.value_of("PREFIX").unwrap();
-    let exec_name = args.value_of("NAME").unwrap();
+    let exec_name = args.value_of("name").unwrap_or(pfx_name);
 
     manage_new_exec(config, pfx_name, exec_name)
 }
