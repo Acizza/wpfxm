@@ -38,9 +38,10 @@ fn main() {
         (@subcommand run =>
             (about: "Run a saved application in a prefix managed by wpfxm")
             (@arg PREFIX: +takes_value +required "The name of the Wine prefix")
-            (@arg name: +takes_value "The name of the application to run; can be omitted if there is only one application managed")
+            (@arg name: -n --name +takes_value "The name of the application to run; can be omitted if there is only one application managed")
             (@arg env_vars: -e --env +takes_value +multiple "The environment variables to launch with")
             (@arg force_run_x86: --x86 "Run the application in 32-bit mode")
+            (@arg args: +takes_value +multiple "The arguments to run the application with")
         )
         (@subcommand exec =>
             (about: "Run an arbitrary executable for a prefix managed by wpfxm")
@@ -115,6 +116,7 @@ fn main() {
         )
     )
     .setting(AppSettings::SubcommandRequiredElseHelp)
+    .setting(AppSettings::TrailingVarArg)
     .get_matches();
 
     match run(&args) {

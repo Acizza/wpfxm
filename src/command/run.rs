@@ -41,7 +41,7 @@ pub fn run(config: &Config, args: &clap::ArgMatches) -> Result<(), CommandError>
     let launch_opts = LaunchOptions {
         env_vars: super::parse_env_var_args(args.values_of_lossy("env_vars")),
         force_run_x86: prefix.force_run_x86 || args.is_present("force_run_x86"),
-        args: Vec::new(),
+        args: args.values_of_lossy("args").unwrap_or_default(),
     };
 
     if let Err(err) = prefix.launch_prefix_process(config, &exec_path, launch_opts) {
