@@ -1,7 +1,7 @@
 use crate::error::ConfigError;
 use crate::util::dir;
+use hashbrown::HashMap;
 use serde_derive::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 

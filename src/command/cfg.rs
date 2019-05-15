@@ -3,7 +3,7 @@ use crate::display;
 use crate::error::CommandError;
 use crate::prefix::{Hook, Prefix};
 use colored::Colorize;
-use std::collections::HashMap;
+use hashbrown::HashMap;
 use std::path::PathBuf;
 
 pub fn run(config: &mut Config, args: &clap::ArgMatches) -> Result<(), CommandError> {

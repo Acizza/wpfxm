@@ -8,7 +8,7 @@ pub mod new;
 pub mod rm;
 pub mod run;
 
-use std::collections::HashMap;
+use hashbrown::HashMap;
 
 fn parse_env_var_arg<S>(arg: S) -> Option<(String, String)>
 where
