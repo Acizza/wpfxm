@@ -15,26 +15,17 @@ pub fn run(config: &Config, args: &clap::ArgMatches) -> Result<(), CommandError>
         Err(err) => return Err(err.into()),
     };
 
-    // TODO: simplify
-    let (exec_name, exec_path) = match prefix.saved_execs.len() {
-        0 => return Err(CommandError::NoSavedExecs),
-        1 => {
-            let (name, value) = prefix.saved_execs.iter().next().unwrap();
-            (name.clone(), value.clone())
-        }
-        _ => {
-            let exec_name = args
-                .value_of("name")
-                .ok_or(CommandError::NameNeededToRunExec)?;
-
-            if !prefix.saved_execs.contains_key(exec_name) {
-                return Err(CommandError::ExecNotManaged(exec_name.into()))?;
-            }
-
-            let value = prefix.saved_execs[exec_name].clone();
-            (exec_name.into(), value)
-        }
+    let exec_name = match args.value_of("name") {
+        Some(name) => name,
+        None if prefix.saved_execs.len() > 1 => return Err(CommandError::NameNeededToRunExec),
+        None => pfx_name,
     };
+
+    if !prefix.saved_execs.contains_key(exec_name) {
+        return Err(CommandError::ExecNotManaged(exec_name.into()));
+    }
+
+    let exec_path = &prefix.saved_execs[exec_name];
 
     display::info(format!("running {}", exec_name.blue()));
 
