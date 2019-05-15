@@ -12,7 +12,7 @@ pub fn read_line() -> Result<String, InputError> {
         .map_err(InputError::ReadFailed)?;
 
     // Trim the right side of the buffer to remove the newline character
-    Ok(buffer.trim_right().to_string())
+    Ok(buffer.trim_end().to_string())
 }
 
 pub fn read_range<T>(min: T, max: T) -> Result<T, InputError>
