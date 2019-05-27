@@ -19,7 +19,7 @@ where
 {
     let pfx_name = pfx_name.as_ref();
 
-    if !Prefix::get_data_file(&pfx_name)?.exists() {
+    if !Prefix::save_data_path(&pfx_name)?.exists() {
         return Err(CommandError::PrefixNotManaged(pfx_name.into()));
     }
 

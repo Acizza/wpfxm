@@ -7,7 +7,7 @@ use std::fs;
 
 pub fn run(config: &mut Config, args: &clap::ArgMatches) -> Result<(), CommandError> {
     let pfx_name = args.value_of("PREFIX").unwrap();
-    let pfx_data_path = Prefix::get_data_file(&pfx_name)?;
+    let pfx_data_path = Prefix::save_data_path(&pfx_name)?;
 
     let data_only = args.is_present("data_only");
 

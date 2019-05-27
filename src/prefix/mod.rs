@@ -162,7 +162,7 @@ impl Prefix {
         S: Into<String>,
     {
         let name = name.into();
-        let path = Prefix::get_data_file(&name)?;
+        let path = Prefix::save_data_path(&name)?;
 
         Prefix::load_direct(name, path)
     }
@@ -205,7 +205,7 @@ impl Prefix {
     }
 
     pub fn save(&self) -> Result<(), PrefixError> {
-        let path = Prefix::get_data_file(&self.name)?;
+        let path = Prefix::save_data_path(&self.name)?;
         let toml = toml::to_string(self).map_err(PrefixError::FailedToSerializeConfig)?;
 
         fs::write(path, toml).map_err(PrefixError::FailedToWriteConfig)?;
@@ -220,7 +220,7 @@ impl Prefix {
         dir::get_data_dir().ok_or(PrefixError::FailedToGetDataDir)
     }
 
-    pub fn get_data_file<S>(name: S) -> Result<PathBuf, PrefixError>
+    pub fn save_data_path<S>(name: S) -> Result<PathBuf, PrefixError>
     where
         S: AsRef<str>,
     {

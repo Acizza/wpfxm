@@ -57,7 +57,7 @@ where
     let pfx_name = pfx_name.as_ref();
     let pfx_path = prefix::get_path(config, &pfx_name);
     let pfx_exists = prefix::is_valid(&pfx_path);
-    let pfx_data_exists = Prefix::get_data_file(pfx_name)
+    let pfx_data_exists = Prefix::save_data_path(pfx_name)
         .map(|f| f.exists())
         .unwrap_or(false);
 
