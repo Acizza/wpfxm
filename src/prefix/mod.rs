@@ -169,7 +169,7 @@ impl Prefix {
 
     pub fn load_all() -> Result<Vec<Prefix>, PrefixError> {
         let entries =
-            fs::read_dir(Prefix::get_data_dir()?).map_err(PrefixError::FailedToReadDataDir)?;
+            fs::read_dir(Prefix::save_data_dir()?).map_err(PrefixError::FailedToReadDataDir)?;
 
         let mut prefixes = Vec::new();
 
@@ -216,7 +216,7 @@ impl Prefix {
         get_path(config, &self.name)
     }
 
-    pub fn get_data_dir() -> Result<PathBuf, PrefixError> {
+    pub fn save_data_dir() -> Result<PathBuf, PrefixError> {
         dir::get_data_dir().ok_or(PrefixError::FailedToGetDataDir)
     }
 
@@ -224,7 +224,7 @@ impl Prefix {
     where
         S: AsRef<str>,
     {
-        let mut dir = Prefix::get_data_dir()?;
+        let mut dir = Prefix::save_data_dir()?;
         dir.push(name.as_ref());
         Ok(dir)
     }
