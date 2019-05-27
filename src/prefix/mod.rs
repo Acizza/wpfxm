@@ -192,8 +192,13 @@ impl Prefix {
     }
 
     pub fn create(&self, config: &Config) -> Result<(), PrefixError> {
-        let mut cmd = Command::new("wineboot");
+        // Wine will not create any directories leading up to the one containing the actual prefix
+        if !config.base_directory.exists() {
+            fs::create_dir_all(&config.base_directory)
+                .map_err(PrefixError::FailedToCreateBaseDir)?;
+        }
 
+        let mut cmd = Command::new("wineboot");
         self.attach_cmd_to_prefix(config, &mut cmd);
         let status = cmd.status().map_err(PrefixError::FailedToCreatePrefix)?;
 

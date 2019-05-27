@@ -92,6 +92,9 @@ pub enum PrefixError {
 
     #[fail(display = "Wine failed to run successfully")]
     WineFailedToExecute,
+
+    #[fail(display = "failed to create base directory")]
+    FailedToCreateBaseDir(#[cause] std::io::Error),
 }
 
 #[derive(Fail, Debug)]
