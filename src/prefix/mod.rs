@@ -342,13 +342,10 @@ impl Prefix {
         let name = name.as_ref();
         let mut cmd = Command::new(&name);
 
-        cmd.args(opts.args);
         self.attach_cmd_to_prefix(config, &mut cmd);
 
-        for (name, value) in opts.env_vars {
-            cmd.env(name, value);
-        }
-
+        cmd.args(opts.args);
+        cmd.envs(&opts.env_vars);
         cmd.spawn()
     }
 }
