@@ -26,7 +26,7 @@ where
     }
 }
 
-pub fn exists_and_valid<P>(path: P) -> bool
+pub fn is_valid<P>(path: P) -> bool
 where
     P: AsRef<Path>,
 {
