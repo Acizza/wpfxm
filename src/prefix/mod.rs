@@ -236,13 +236,8 @@ impl Prefix {
         cmd.env("WINEARCH", OsStr::new(self.arch.into()));
         cmd.env("WPFXM_PFX_NAME", &self.name);
 
-        for (name, value) in &config.global_env_vars {
-            cmd.env(name, value);
-        }
-
-        for (name, value) in &self.env_vars {
-            cmd.env(name, value);
-        }
+        cmd.envs(&config.global_env_vars);
+        cmd.envs(&self.env_vars);
     }
 
     fn run_hook_silent<S>(&self, name: S, config: &Config) -> Result<(), PrefixError>
