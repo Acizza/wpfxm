@@ -145,9 +145,6 @@ pub enum CommandError {
     #[fail(display = "prefix does not exist")]
     PrefixDoesNotExist,
 
-    #[fail(display = "prefix data does not exist")]
-    PrefixDataDoesNotExist,
-
     #[fail(display = "failed to remove {}", _1)]
     FailedToRemovePath(#[cause] std::io::Error, &'static str),
 
