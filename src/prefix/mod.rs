@@ -304,16 +304,12 @@ impl Prefix {
             path
         };
 
-        cmd.arg(&path);
-        cmd.args(opts.args);
-        cmd.current_dir(&exe_dir);
-
         self.attach_cmd_to_prefix(config, &mut cmd);
 
-        for (name, value) in opts.env_vars {
-            cmd.env(name, value);
-        }
-
+        cmd.arg(&path);
+        cmd.args(opts.args);
+        cmd.envs(&opts.env_vars);
+        cmd.current_dir(&exe_dir);
         cmd.spawn()
     }
 
