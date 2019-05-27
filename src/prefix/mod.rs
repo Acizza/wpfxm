@@ -7,6 +7,7 @@ use crate::util::dir;
 use colored::Colorize;
 use hashbrown::HashMap;
 use serde_derive::{Deserialize, Serialize};
+use std::convert::TryFrom;
 use std::ffi::OsStr;
 use std::fs::{self, File};
 use std::io::{self, BufRead, BufReader};
@@ -71,17 +72,31 @@ impl PrefixArch {
         None
     }
 
-    pub fn parse<S>(string: S) -> Option<PrefixArch>
+    pub fn detect<P>(path: P) -> Result<PrefixArch, PrefixError>
     where
-        S: AsRef<str>,
+        P: AsRef<Path>,
     {
-        let string = string.as_ref().to_ascii_lowercase();
+        // These files contain the prefix architecture, and are sorted in increasing order of
+        // size incase one file doesn't have the line we're looking for
+        const FILES: [&str; 3] = ["userdef.reg", "user.reg", "system.reg"];
 
-        match string.as_ref() {
-            "win32" => Some(PrefixArch::Win32),
-            "win64" => Some(PrefixArch::Win64),
-            _ => None,
+        for fname in &FILES {
+            let path = path.as_ref().join(fname);
+
+            let file = match File::open(path) {
+                Ok(f) => f,
+                Err(err) => {
+                    display::error(ErrorSeverity::Warning, err);
+                    continue;
+                }
+            };
+
+            if let Some(arch) = PrefixArch::extract_from_reg_file(&file) {
+                return Ok(arch);
+            }
         }
+
+        Err(PrefixError::FailedToDetectArch)
     }
 }
 
@@ -94,44 +109,24 @@ impl<'a> Into<&'a str> for PrefixArch {
     }
 }
 
+impl TryFrom<&str> for PrefixArch {
+    type Error = ();
+
+    fn try_from(value: &str) -> Result<PrefixArch, Self::Error> {
+        let string = value.to_ascii_lowercase();
+
+        match string.as_ref() {
+            "win64" => Ok(PrefixArch::Win64),
+            "win32" => Ok(PrefixArch::Win32),
+            _ => Err(()),
+        }
+    }
+}
+
 impl Default for PrefixArch {
     fn default() -> PrefixArch {
         PrefixArch::Win64
     }
-}
-
-pub fn detect_arch<P>(path: P) -> Result<PrefixArch, PrefixError>
-where
-    P: AsRef<Path>,
-{
-    // These files contain the prefix architecture, and are sorted in increasing order of
-    // size incase one file doesn't have the line we're looking for
-    const FILES: [&str; 3] = ["userdef.reg", "user.reg", "system.reg"];
-    let mut arch = None;
-
-    for fname in &FILES {
-        let path = path.as_ref().join(fname);
-
-        let file = match File::open(path) {
-            Ok(f) => f,
-            Err(err) => {
-                display::error(ErrorSeverity::Warning, err);
-                continue;
-            }
-        };
-
-        if let Some(detected) = PrefixArch::extract_from_reg_file(&file) {
-            arch = Some(detected);
-            break;
-        }
-    }
-
-    let arch = match arch {
-        Some(arch) => arch,
-        None => return Err(PrefixError::FailedToDetectArch),
-    };
-
-    Ok(arch)
 }
 
 pub type Name = String;

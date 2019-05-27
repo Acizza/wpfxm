@@ -4,6 +4,7 @@ use crate::error::CommandError;
 use crate::prefix::{self, LaunchOptions, Prefix, PrefixArch};
 use colored::Colorize;
 use hashbrown::HashMap;
+use std::convert::TryFrom;
 use std::path::PathBuf;
 
 pub fn run(config: &mut Config, args: &clap::ArgMatches) -> Result<(), CommandError> {
@@ -71,10 +72,10 @@ where
         display::info("creating new prefix save data");
 
         let arch = if pfx_exists {
-            prefix::detect_arch(&pfx_path)?
+            PrefixArch::detect(&pfx_path)?
         } else {
             args.value_of("arch")
-                .and_then(PrefixArch::parse)
+                .and_then(|arch| PrefixArch::try_from(arch).ok())
                 .unwrap_or_default()
         };
 
