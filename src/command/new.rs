@@ -5,6 +5,8 @@ use crate::prefix::{self, LaunchOptions, Prefix, PrefixArch};
 use colored::Colorize;
 use hashbrown::HashMap;
 use std::convert::TryFrom;
+use std::thread;
+use std::time::Duration;
 use std::path::PathBuf;
 
 pub fn run(config: &mut Config, args: &clap::ArgMatches) -> Result<(), CommandError> {
@@ -19,6 +21,9 @@ pub fn run(config: &mut Config, args: &clap::ArgMatches) -> Result<(), CommandEr
     let pfx = load_or_create_pfx(config, args, pfx_name)?;
 
     if !args.is_present("explicit_hooks") {
+        display::hook("waiting for Wine to finish..");
+        thread::sleep(Duration::from_secs(5));
+        
         display::hook("running setup hooks");
         pfx.run_hooks(config, &config.setup_hooks);
     }
