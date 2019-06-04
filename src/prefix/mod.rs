@@ -1,10 +1,10 @@
+pub mod hook;
 pub mod scan;
 
 use crate::config::Config;
 use crate::display::{self, ErrorSeverity};
 use crate::error::PrefixError;
 use crate::util::dir;
-use colored::Colorize;
 use hashbrown::HashMap;
 use serde_derive::{Deserialize, Serialize};
 use std::convert::TryFrom;
@@ -245,40 +245,6 @@ impl Prefix {
         cmd.envs(&self.env_vars);
     }
 
-    fn run_hook_silent<S>(&self, name: S, config: &Config) -> Result<(), PrefixError>
-    where
-        S: AsRef<str>,
-    {
-        let hook = Hook::create(name)?;
-        let mut cmd = hook.build_run_cmd(config, self);
-
-        let exit_code = cmd.status().ok().and_then(|s| s.code()).unwrap_or(0);
-
-        if exit_code != 0 {
-            return Err(PrefixError::FailedToRunHook);
-        }
-
-        Ok(())
-    }
-
-    pub fn run_hooks(&self, config: &Config, hooks: &[String]) {
-        for (i, hook_name) in hooks.iter().enumerate() {
-            display::hook(format!(
-                "running {} in {} prefix [{}/{}]",
-                hook_name.green(),
-                self.name.blue(),
-                1 + i,
-                hooks.len()
-            ));
-
-            if let Err(err) = self.run_hook_silent(hook_name, config) {
-                display::error(ErrorSeverity::Warning, err);
-            }
-        }
-
-        display::hook("finished running");
-    }
-
     pub fn launch_process<P>(
         &self,
         config: &Config,
@@ -356,44 +322,4 @@ pub struct LaunchOptions {
     pub force_run_x86: bool,
     pub env_vars: HashMap<String, String>,
     pub args: Vec<String>,
-}
-
-#[derive(Debug)]
-pub struct Hook {
-    pub path: PathBuf,
-}
-
-impl Hook {
-    pub fn create<S>(name: S) -> Result<Hook, PrefixError>
-    where
-        S: AsRef<str>,
-    {
-        let path = Hook::get_path(&name)?;
-
-        if !path.exists() {
-            return Err(PrefixError::HookNotFound(name.as_ref().into()));
-        }
-
-        Ok(Hook { path })
-    }
-
-    pub fn get_path<S>(name: S) -> Result<PathBuf, PrefixError>
-    where
-        S: AsRef<str>,
-    {
-        let mut path = dir::get_hooks_dir()
-            .ok_or(PrefixError::FailedToGetHooksDir)?
-            .join(name.as_ref());
-
-        path.set_extension("sh");
-        Ok(path)
-    }
-
-    pub fn build_run_cmd(&self, config: &Config, prefix: &Prefix) -> Command {
-        let mut cmd = Command::new("bash");
-        cmd.arg(&self.path);
-        prefix.attach_cmd_to_prefix(config, &mut cmd);
-
-        cmd
-    }
 }

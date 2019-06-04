@@ -1,13 +1,14 @@
 use crate::config::Config;
 use crate::display;
 use crate::error::CommandError;
+use crate::prefix::hook;
 use crate::prefix::{self, LaunchOptions, Prefix, PrefixArch};
 use colored::Colorize;
 use hashbrown::HashMap;
 use std::convert::TryFrom;
+use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
-use std::path::PathBuf;
 
 pub fn run(config: &mut Config, args: &clap::ArgMatches) -> Result<(), CommandError> {
     let pfx_name = args.value_of("PREFIX").unwrap();
@@ -23,9 +24,9 @@ pub fn run(config: &mut Config, args: &clap::ArgMatches) -> Result<(), CommandEr
     if !args.is_present("explicit_hooks") {
         display::hook("waiting for Wine to finish..");
         thread::sleep(Duration::from_secs(5));
-        
+
         display::hook("running setup hooks");
-        pfx.run_hooks(config, &config.setup_hooks);
+        hook::run_list(config, &pfx, &config.setup_hooks);
     }
 
     if let Some(mut run_args) = args.values_of_lossy("run") {

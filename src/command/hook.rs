@@ -1,5 +1,6 @@
 use crate::config::Config;
 use crate::error::CommandError;
+use crate::prefix::hook;
 use crate::prefix::Prefix;
 
 pub fn run(config: &Config, args: &clap::ArgMatches) -> Result<(), CommandError> {
@@ -15,7 +16,7 @@ fn run_hooks(config: &Config, args: &clap::ArgMatches) -> Result<(), CommandErro
     match args.value_of("prefix") {
         Some(pfx_name) => {
             let prefix = Prefix::load(pfx_name)?;
-            prefix.run_hooks(config, &hooks);
+            hook::run_list(config, &prefix, &hooks);
         }
         None => {
             let prefixes = Prefix::load_all()?;
@@ -25,7 +26,7 @@ fn run_hooks(config: &Config, args: &clap::ArgMatches) -> Result<(), CommandErro
                     continue;
                 }
 
-                prefix.run_hooks(config, &hooks);
+                hook::run_list(config, &prefix, &hooks);
             }
         }
     }

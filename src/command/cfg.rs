@@ -1,7 +1,8 @@
 use crate::config::Config;
 use crate::display;
 use crate::error::CommandError;
-use crate::prefix::{Hook, Prefix};
+use crate::prefix::hook::Hook;
+use crate::prefix::Prefix;
 use colored::Colorize;
 use hashbrown::HashMap;
 use std::path::PathBuf;
