@@ -4,6 +4,12 @@ version = "0.0.0"
 authors = ["Acizza <jgit@tuta.io>"]
 edition = "2018"
 
+[dependencies]
+chrono = "~0.4.0"
+snafu = "~0.6.0"
+termion = "~1.5.0"
+tui = "~0.8.0"
+
 [profile.release]
 codegen-units = 1
 lto = true
