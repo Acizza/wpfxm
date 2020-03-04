@@ -55,6 +55,15 @@ where
 
                 LogResult::Ok
             }
+            Key::BackTab => {
+                self.selected = if self.selected == 0 {
+                    self.items.len().saturating_sub(1)
+                } else {
+                    self.selected - 1
+                };
+
+                LogResult::Ok
+            }
             _ => LogResult::Ok,
         }
     }
