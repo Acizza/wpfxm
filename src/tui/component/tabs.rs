@@ -42,7 +42,7 @@ where
     B: Backend,
     N: ArrayLength<GenericTab<B>>,
 {
-    fn process_key(&mut self, key: Key, _: &mut State) -> LogResult {
+    fn process_key(&mut self, key: Key, state: &mut State) -> LogResult {
         match key {
             Key::Char('\t') => {
                 let new_index = self.selected + 1;
@@ -64,7 +64,14 @@ where
 
                 LogResult::Ok
             }
-            _ => LogResult::Ok,
+            _ => {
+                let tab = match self.items.get_mut(self.selected) {
+                    Some(tab) => tab,
+                    None => return LogResult::Ok,
+                };
+
+                tab.process_key(key, state)
+            }
         }
     }
 

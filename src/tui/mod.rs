@@ -4,8 +4,8 @@ mod component;
 use crate::err::{Error, Result};
 use backend::{UIBackend, UIEvent, UIEvents};
 use chrono::Duration;
-use component::prefix_applications::PrefixApplications;
-use component::prefix_list::PrefixList;
+use component::applications::Applications;
+use component::hooks::Hooks;
 use component::tabs::{GenericTab, Tab, TabList};
 use component::Component;
 use generic_array::arr;
@@ -27,17 +27,17 @@ where
     #[inline(always)]
     pub fn new(backend: UIBackend<B>) -> Self {
         let tabs = arr![GenericTab<B>;
-            Tab::new("List", Box::new(PrefixList::new()) as Box<dyn Component<B>>),
             Tab::new(
                 "Applications",
-                Box::new(PrefixApplications::new()) as Box<dyn Component<B>>,
+                Box::new(Applications::new()) as Box<dyn Component<B>>,
             ),
+            Tab::new("Hooks", Box::new(Hooks::new()) as Box<dyn Component<B>>),
         ];
 
         Self {
             backend,
             state: State::default(),
-            tabs: TabList::new("Prefix View", tabs),
+            tabs: TabList::new("View", tabs),
         }
     }
 
