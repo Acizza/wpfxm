@@ -1,7 +1,7 @@
 use super::{Backend, Component, Frame, LogResult, Rect, WrappingSelection};
 use crate::tui::State;
 use termion::event::Key;
-use tui::layout::{Constraint, Direction, Layout};
+use tui::layout::{Alignment, Constraint, Direction, Layout};
 use tui::style::{Color, Modifier, Style};
 use tui::widgets::{Block, Borders, Paragraph, SelectableList, Text, Widget};
 
@@ -54,10 +54,15 @@ where
     }
 
     fn draw(&mut self, _: &State, rect: Rect, frame: &mut Frame<B>) {
+        let vert_layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Min(3), Constraint::Length(1)].as_ref())
+            .split(rect);
+
         let horiz_layout = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([Constraint::Percentage(30), Constraint::Percentage(70)].as_ref())
-            .split(rect);
+            .split(vert_layout[0]);
 
         let prefix_layout = Layout::default()
             .direction(Direction::Vertical)
@@ -87,5 +92,30 @@ where
             .highlight_style(Style::default().fg(Color::Green))
             .highlight_symbol(">")
             .render(frame, horiz_layout[1]);
+
+        let hint_text_layout = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+            .split(vert_layout[1]);
+
+        Paragraph::new(
+            [Text::styled(
+                "Enter to select prefix / run selected",
+                Style::default().fg(Color::DarkGray),
+            )]
+            .iter(),
+        )
+        .alignment(Alignment::Center)
+        .render(frame, hint_text_layout[0]);
+
+        Paragraph::new(
+            [Text::styled(
+                "R to run input",
+                Style::default().fg(Color::DarkGray),
+            )]
+            .iter(),
+        )
+        .alignment(Alignment::Center)
+        .render(frame, hint_text_layout[1]);
     }
 }
