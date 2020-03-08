@@ -1,5 +1,6 @@
 use snafu::{Backtrace, ErrorCompat, GenerateBacktrace, Snafu};
 use std::io;
+use std::path;
 use std::result;
 use std::sync::mpsc;
 
@@ -19,6 +20,36 @@ pub enum Error {
         source: mpsc::RecvError,
         backtrace: Backtrace,
     },
+
+    #[snafu(display("file io error at {}: {}", path.display(), source))]
+    FileIO {
+        path: path::PathBuf,
+        source: io::Error,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("toml decode error at {}: {}", path.display(), source))]
+    TomlDecode {
+        path: path::PathBuf,
+        source: toml::de::Error,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("toml encode error at {}: {}", path.display(), source))]
+    TomlEncode {
+        path: path::PathBuf,
+        source: toml::ser::Error,
+        backtrace: Backtrace,
+    },
+}
+
+impl Error {
+    pub fn is_file_nonexistant(&self) -> bool {
+        match self {
+            Error::FileIO { source, .. } => source.kind() == io::ErrorKind::NotFound,
+            _ => false,
+        }
+    }
 }
 
 impl From<io::Error> for Error {

@@ -1,3 +1,4 @@
+mod config;
 mod err;
 mod tui;
 
