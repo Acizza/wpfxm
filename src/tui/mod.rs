@@ -1,6 +1,7 @@
 pub mod backend;
 mod component;
 
+use crate::config::Config;
 use crate::err::{Error, Result};
 use backend::{UIBackend, UIEvent, UIEvents};
 use chrono::Duration;
@@ -25,7 +26,7 @@ where
     B: Backend,
 {
     #[inline(always)]
-    pub fn new(backend: UIBackend<B>) -> Self {
+    pub fn init(backend: UIBackend<B>) -> Result<Self> {
         let tabs = arr![GenericTab<B>;
             Tab::new(
                 "Applications",
@@ -34,11 +35,11 @@ where
             Tab::new("Hooks", Box::new(Hooks::new()) as Box<dyn Component<B>>),
         ];
 
-        Self {
+        Ok(Self {
             backend,
-            state: State::default(),
+            state: State::init()?,
             tabs: TabList::new("View", tabs),
-        }
+        })
     }
 
     pub fn run(mut self) -> Result<()> {
@@ -112,8 +113,17 @@ where
     }
 }
 
-#[derive(Default)]
-pub struct State {}
+pub struct State {
+    config: Config,
+}
+
+impl State {
+    fn init() -> Result<Self> {
+        let config = Config::load_or_create()?;
+
+        Ok(Self { config })
+    }
+}
 
 pub enum LogResult {
     Ok,

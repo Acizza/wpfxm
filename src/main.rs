@@ -15,7 +15,7 @@ fn main() {
 
 fn run() -> Result<()> {
     let backend = UIBackend::init()?;
-    let tui = TUI::new(backend);
+    let tui = TUI::init(backend)?;
 
     tui.run()?;
 
