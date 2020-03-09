@@ -55,7 +55,7 @@ impl UIEvents {
         thread::spawn(move || {
             for event in stdin.keys() {
                 if let Ok(key) = event {
-                    tx.send(UIEvent::Input(key)).unwrap();
+                    tx.send(UIEvent::Input(key)).ok();
                 }
             }
         })
@@ -71,7 +71,7 @@ impl UIEvents {
 
         thread::spawn(move || loop {
             thread::sleep(tick_rate);
-            tx.send(UIEvent::Tick).unwrap();
+            tx.send(UIEvent::Tick).ok();
         })
     }
 
