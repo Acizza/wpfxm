@@ -2,6 +2,7 @@ use crate::err::{self, Result};
 use once_cell::sync::Lazy;
 use serde_derive::{Deserialize, Serialize};
 use snafu::ResultExt;
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
@@ -9,6 +10,7 @@ use std::path::PathBuf;
 pub struct Config {
     pub prefix_path: PathBuf,
     pub default_hooks: Vec<String>,
+    pub env: HashMap<String, String>,
 }
 
 impl Config {
@@ -19,6 +21,7 @@ impl Config {
         Self {
             prefix_path,
             default_hooks: Vec::new(),
+            env: HashMap::new(),
         }
     }
 
