@@ -1,20 +1,16 @@
-use super::{Backend, Component, Frame, LogResult, Rect, WrappingSelection};
+use super::{Backend, Component, Frame, LogResult, Rect};
 use crate::tui::State;
 use termion::event::Key;
 use tui::layout::{Alignment, Constraint, Direction, Layout};
 use tui::style::{Color, Modifier, Style};
 use tui::widgets::{Block, Borders, Paragraph, SelectableList, Text, Widget};
 
-pub struct Applications {
-    prefixes: WrappingSelection<&'static str>,
-}
+pub struct Applications;
 
 impl Applications {
     #[inline(always)]
     pub fn new() -> Self {
-        Self {
-            prefixes: WrappingSelection::new(vec!["Test 1", "Test 2", "Test 3"]),
-        }
+        Self {}
     }
 }
 
@@ -39,21 +35,21 @@ impl<B> Component<B> for Applications
 where
     B: Backend,
 {
-    fn process_key(&mut self, key: Key, _: &mut State) -> LogResult {
+    fn process_key(&mut self, key: Key, state: &mut State) -> LogResult {
         match key {
             Key::Up => {
-                self.prefixes.decrement();
+                state.prefixes.decrement();
                 LogResult::Ok
             }
             Key::Down => {
-                self.prefixes.increment();
+                state.prefixes.increment();
                 LogResult::Ok
             }
             _ => LogResult::Ok,
         }
     }
 
-    fn draw(&mut self, _: &State, rect: Rect, frame: &mut Frame<B>) {
+    fn draw(&mut self, state: &State, rect: Rect, frame: &mut Frame<B>) {
         let vert_layout = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Min(3), Constraint::Length(1)].as_ref())
@@ -69,12 +65,20 @@ where
             .constraints([Constraint::Percentage(70), Constraint::Percentage(30)].as_ref())
             .split(horiz_layout[0]);
 
+        // TODO: optimize
+        let prefix_names = state
+            .prefixes
+            .items()
+            .iter()
+            .map(|pfx| &pfx.name)
+            .collect::<Vec<_>>();
+
         SelectableList::default()
             .block(Block::default().borders(Borders::ALL).title("Prefix"))
             .highlight_style(Style::default().fg(Color::Green))
             .highlight_symbol(">")
-            .items(self.prefixes.items())
-            .select(Some(self.prefixes.index()))
+            .items(&prefix_names)
+            .select(Some(state.prefixes.index()))
             .render(frame, prefix_layout[0]);
 
         let info_items = create_stat_list!(

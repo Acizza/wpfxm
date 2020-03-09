@@ -28,6 +28,13 @@ pub enum Error {
         backtrace: Backtrace,
     },
 
+    #[snafu(display("dir entry error at {}: {}", dir.display(), source))]
+    EntryIO {
+        dir: path::PathBuf,
+        source: io::Error,
+        backtrace: Backtrace,
+    },
+
     #[snafu(display("toml decode error at {}: {}", path.display(), source))]
     TomlDecode {
         path: path::PathBuf,
@@ -41,6 +48,12 @@ pub enum Error {
         source: toml::ser::Error,
         backtrace: Backtrace,
     },
+
+    #[snafu(display("{} is not a valid Wine prefix", path.display()))]
+    NotAPrefix { path: path::PathBuf },
+
+    #[snafu(display("failed to detect prefix arch at {}", path.display()))]
+    NoArchDetected { path: path::PathBuf },
 }
 
 impl Error {

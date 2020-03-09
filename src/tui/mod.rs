@@ -3,6 +3,7 @@ mod component;
 
 use crate::config::Config;
 use crate::err::{Error, Result};
+use crate::prefix::Prefix;
 use backend::{UIBackend, UIEvent, UIEvents};
 use chrono::Duration;
 use component::applications::Applications;
@@ -114,18 +115,69 @@ where
 }
 
 pub struct State {
+    prefixes: WrappingSelection<Prefix>,
     config: Config,
 }
 
 impl State {
     fn init() -> Result<Self> {
         let config = Config::load_or_create()?;
+        let prefixes = Prefix::all_from_dir(&config.prefix_path)?.into();
 
-        Ok(Self { config })
+        Ok(Self { prefixes, config })
     }
 }
 
 pub enum LogResult {
     Ok,
     Err(String, Error),
+}
+
+pub struct WrappingSelection<T> {
+    items: Vec<T>,
+    selected: usize,
+}
+
+impl<T> WrappingSelection<T> {
+    #[inline(always)]
+    pub fn new<I>(items: I) -> Self
+    where
+        I: Into<Vec<T>>,
+    {
+        Self {
+            items: items.into(),
+            selected: 0,
+        }
+    }
+
+    #[inline(always)]
+    pub fn index(&self) -> usize {
+        self.selected
+    }
+
+    #[inline(always)]
+    pub fn items(&self) -> &Vec<T> {
+        &self.items
+    }
+
+    #[inline(always)]
+    pub fn increment(&mut self) {
+        let next = self.selected + 1;
+        self.selected = if next >= self.items.len() { 0 } else { next };
+    }
+
+    #[inline(always)]
+    pub fn decrement(&mut self) {
+        self.selected = if self.selected == 0 {
+            self.items.len().saturating_sub(1)
+        } else {
+            self.selected - 1
+        }
+    }
+}
+
+impl<T> From<Vec<T>> for WrappingSelection<T> {
+    fn from(items: Vec<T>) -> Self {
+        Self::new(items)
+    }
 }

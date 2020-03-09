@@ -1,6 +1,8 @@
 mod config;
 mod err;
+mod prefix;
 mod tui;
+mod util;
 
 use crate::err::Result;
 use crate::tui::backend::UIBackend;
