@@ -1,7 +1,8 @@
 use crate::err::{self, Result};
 use snafu::ResultExt;
+use std::borrow::Cow;
 use std::fs::{self, DirEntry};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 pub fn subdirectories<P>(dir: P) -> Result<Vec<DirEntry>>
 where
@@ -24,4 +25,17 @@ where
     }
 
     Ok(dirs)
+}
+
+pub fn strip_base_path<'a, B, P>(base: B, path: P) -> PathBuf
+where
+    B: AsRef<Path>,
+    P: Into<Cow<'a, Path>>,
+{
+    let path = path.into();
+
+    match path.strip_prefix(base) {
+        Ok(path) => path.into(),
+        Err(_) => path.into_owned(),
+    }
 }

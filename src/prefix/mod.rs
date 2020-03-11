@@ -13,26 +13,28 @@ use std::path::{Path, PathBuf};
 pub struct Prefix {
     pub name: String,
     pub arch: Arch,
+    pub path: PathBuf,
     pub applications: Vec<Application>,
 }
 
 impl Prefix {
     pub fn from_path<P, S>(path: P, name: S) -> Result<Self>
     where
-        P: AsRef<Path>,
+        P: Into<PathBuf>,
         S: Into<String>,
     {
-        let path = path.as_ref();
+        let path = path.into();
 
         if !is_valid(&path) {
-            return Err(Error::NotAPrefix { path: path.into() });
+            return Err(Error::NotAPrefix { path });
         }
 
-        let arch = Arch::from_prefix(&path).context(err::NoArchDetected { path })?;
+        let arch = Arch::from_prefix(&path).context(err::NoArchDetected { path: path.clone() })?;
 
         Ok(Self {
             name: name.into(),
             arch,
+            path,
             applications: Vec::new(),
         })
     }
@@ -51,6 +53,77 @@ impl Prefix {
             .collect();
 
         Ok(prefixes)
+    }
+
+    fn find_execs_and_dirs(path: &Path, base: &Path) -> (Vec<PathBuf>, Vec<PathBuf>) {
+        const EXCLUDE_FOLDERS: [&str; 4] = [
+            "windows",
+            "windows nt",
+            "windows media player",
+            "internet explorer",
+        ];
+
+        let entries = match fs::read_dir(path) {
+            Ok(entries) => entries,
+            Err(_) => return (Vec::new(), Vec::new()),
+        };
+
+        let mut execs = Vec::new();
+        let mut dirs = Vec::new();
+
+        for entry in entries {
+            let entry = match entry {
+                Ok(entry) => entry,
+                _ => continue,
+            };
+
+            let file_type = match entry.file_type() {
+                Ok(ftype) => ftype,
+                _ => continue,
+            };
+
+            let filename = entry.file_name();
+            let filename = filename.to_string_lossy();
+
+            if file_type.is_dir() {
+                if EXCLUDE_FOLDERS
+                    .iter()
+                    .any(|&exclude| filename.eq_ignore_ascii_case(exclude))
+                {
+                    continue;
+                }
+
+                dirs.push(entry.path());
+                continue;
+            }
+
+            if !filename.ends_with(".exe") {
+                continue;
+            }
+
+            let path = util::strip_base_path(base, entry.path());
+            execs.push(path);
+        }
+
+        (execs, dirs)
+    }
+
+    /// Finds all executables within the prefix and returns their relative path.
+    ///
+    /// Implementation note: a linear solution is used to scan directories instead of a recursive one,
+    /// so there isn't a stack overflow risk.
+    pub fn find_relative_executables(&self) -> Vec<PathBuf> {
+        let (mut execs, mut dirs) = Self::find_execs_and_dirs(&self.path, &self.path);
+
+        while !dirs.is_empty() {
+            let dir = dirs.swap_remove(0);
+            let (new_execs, new_dirs) = Self::find_execs_and_dirs(&dir, &self.path);
+
+            execs.extend(new_execs);
+            dirs.extend(new_dirs);
+        }
+
+        execs
     }
 }
 
