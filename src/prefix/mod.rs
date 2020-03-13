@@ -125,6 +125,21 @@ impl Prefix {
 
         execs
     }
+
+    pub fn populate_applications(&mut self) {
+        self.applications = self
+            .find_relative_executables()
+            .into_iter()
+            .map(|path| path.to_string_lossy().into_owned())
+            .map(Application::new)
+            .collect();
+    }
+}
+
+impl AsRef<str> for Prefix {
+    fn as_ref(&self) -> &str {
+        &self.name
+    }
 }
 
 #[derive(Debug)]

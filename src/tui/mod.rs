@@ -28,17 +28,19 @@ where
 {
     #[inline(always)]
     pub fn init(backend: UIBackend<B>) -> Result<Self> {
+        let mut state = State::init()?;
+
         let tabs = arr![GenericTab<B>;
             Tab::new(
                 "Applications",
-                Box::new(Applications::new()) as Box<dyn Component<B>>,
+                Box::new(Applications::init(&mut state)) as Box<dyn Component<B>>,
             ),
             Tab::new("Hooks", Box::new(Hooks::new()) as Box<dyn Component<B>>),
         ];
 
         Ok(Self {
             backend,
-            state: State::init()?,
+            state,
             tabs: TabList::new("View", tabs),
         })
     }
@@ -153,6 +155,16 @@ impl<T> WrappingSelection<T> {
             items: items.into(),
             selected: 0,
         }
+    }
+
+    #[inline(always)]
+    pub fn selected(&self) -> Option<&T> {
+        self.items.get(self.selected)
+    }
+
+    #[inline(always)]
+    pub fn selected_mut(&mut self) -> Option<&mut T> {
+        self.items.get_mut(self.selected)
     }
 
     #[inline(always)]
