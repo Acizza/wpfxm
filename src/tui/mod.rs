@@ -122,7 +122,12 @@ pub struct State {
 impl State {
     fn init() -> Result<Self> {
         let config = Config::load_or_create()?;
-        let prefixes = Prefix::all_from_dir(&config.prefix_path)?.into();
+
+        let prefixes = {
+            let mut pfxs = Prefix::all_from_dir(&config.prefix_path)?;
+            pfxs.sort_unstable_by(|x, y| x.name.cmp(&y.name));
+            pfxs.into()
+        };
 
         Ok(Self { prefixes, config })
     }
