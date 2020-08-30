@@ -35,7 +35,7 @@ where
 
             match events.next()? {
                 UIEvent::Input(key) => {
-                    if self.process_key(key) {
+                    if self.process_key(key)? {
                         self.exit().ok();
                         break Ok(());
                     }
@@ -57,16 +57,16 @@ where
     /// Process a key input for all UI components.
     ///
     /// Returns true if the program should exit.
-    fn process_key(&mut self, key: Key) -> bool {
+    fn process_key(&mut self, key: Key) -> Result<bool> {
         if let Key::Char('q') = key {
-            return true;
+            return Ok(true);
         }
 
         self.panel
             .process_key(key)
-            .context("key processing for panel failed");
+            .context("key processing for panel failed")?;
 
-        false
+        Ok(false)
     }
 
     fn draw(&mut self) -> Result<()> {
