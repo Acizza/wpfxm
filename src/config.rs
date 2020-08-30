@@ -15,7 +15,7 @@ pub struct Config {
 
 impl Config {
     pub fn new() -> Self {
-        let mut prefix_path = dirs::home_dir().unwrap_or_else(|| PathBuf::from("~/"));
+        let mut prefix_path = dirs_next::home_dir().unwrap_or_else(|| PathBuf::from("~/"));
         prefix_path.push(".wine");
 
         Self {
@@ -56,7 +56,7 @@ impl Config {
 
     pub fn validated_path() -> Result<PathBuf> {
         static CONFIG_PATH: Lazy<PathBuf> = Lazy::new(|| {
-            let mut dir = dirs::config_dir().unwrap_or_else(|| PathBuf::from("~/.config/"));
+            let mut dir = dirs_next::config_dir().unwrap_or_else(|| PathBuf::from("~/.config/"));
             dir.push(env!("CARGO_PKG_NAME"));
             dir
         });
