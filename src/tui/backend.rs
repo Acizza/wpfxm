@@ -6,28 +6,49 @@ use std::thread;
 use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::{IntoRawMode, RawTerminal};
-use tui::backend::{self, Backend};
 use tui::terminal::Terminal;
 
-pub struct UIBackend<B>
-where
-    B: Backend,
-{
-    pub terminal: Terminal<B>,
+pub type DefaultBackend = TermionBackend;
+
+pub trait UIBackend {
+    type Backend: tui::backend::Backend;
+
+    fn init() -> Result<Self>
+    where
+        Self: Sized;
+
+    fn clear(&mut self) -> Result<()>;
+
+    fn terminal_mut(&mut self) -> &mut Terminal<Self::Backend>;
 }
 
-pub type TermionBackend = backend::TermionBackend<RawTerminal<io::Stdout>>;
+type RawTermionBackend = tui::backend::TermionBackend<RawTerminal<io::Stdout>>;
 
-impl UIBackend<TermionBackend> {
-    pub fn init() -> Result<Self> {
+pub struct TermionBackend {
+    terminal: Terminal<RawTermionBackend>,
+}
+
+impl UIBackend for TermionBackend {
+    type Backend = RawTermionBackend;
+
+    fn init() -> Result<Self> {
         let stdout = io::stdout().into_raw_mode()?;
-        let backend = TermionBackend::new(stdout);
+        let backend = RawTermionBackend::new(stdout);
         let mut terminal = Terminal::new(backend)?;
 
         terminal.clear()?;
         terminal.hide_cursor()?;
 
         Ok(Self { terminal })
+    }
+
+    fn clear(&mut self) -> Result<()> {
+        self.terminal.clear().map_err(Into::into)
+    }
+
+    #[inline(always)]
+    fn terminal_mut(&mut self) -> &mut Terminal<Self::Backend> {
+        &mut self.terminal
     }
 }
 

@@ -1,29 +1,30 @@
 pub mod backend;
-mod panel;
+pub mod panel;
 
 use anyhow::{Context, Result};
 use backend::{UIBackend, UIEvent, UIEvents};
 use chrono::Duration;
 use panel::Panel;
 use termion::event::Key;
-use tui::backend::Backend;
 
 pub struct PanelHandler<B, P>
 where
-    B: Backend,
+    B: UIBackend,
     P: Panel<B>,
 {
-    backend: UIBackend<B>,
+    backend: B,
     panel: P,
 }
 
 impl<B, P> PanelHandler<B, P>
 where
-    B: Backend,
+    B: UIBackend,
     P: Panel<B>,
 {
-    pub fn init(backend: UIBackend<B>) -> Result<Self> {
+    pub fn init() -> Result<Self> {
+        let backend = B::init()?;
         let panel = P::init().context("failed to init panel")?;
+
         Ok(Self { backend, panel })
     }
 
@@ -45,8 +46,9 @@ where
         }
     }
 
+    #[inline(always)]
     pub fn exit(mut self) -> Result<()> {
-        self.backend.terminal.clear().map_err(Into::into)
+        self.backend.clear()
     }
 
     #[inline(always)]
@@ -72,7 +74,7 @@ where
     fn draw(&mut self) -> Result<()> {
         // We need to remove the mutable borrow on self so we can call other mutable methods on it during our draw call.
         // This *should* be completely safe as none of the methods we need to call can mutate our backend.
-        let term: *mut _ = &mut self.backend.terminal;
+        let term: *mut _ = self.backend.terminal_mut();
         let term: &mut _ = unsafe { &mut *term };
 
         term.draw(|mut frame| {
