@@ -1,8 +1,5 @@
-pub mod application;
-
 use crate::util;
 use anyhow::{anyhow, Context, Result};
-use application::Application;
 use std::fmt;
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader};
@@ -13,7 +10,7 @@ pub struct Prefix {
     pub name: String,
     pub arch: Arch,
     pub path: PathBuf,
-    pub applications: Vec<Application>,
+    pub found_applications: Vec<PathBuf>,
 }
 
 impl Prefix {
@@ -39,7 +36,7 @@ impl Prefix {
             name: name.into(),
             arch,
             path,
-            applications: Vec::new(),
+            found_applications: Vec::new(),
         })
     }
 
@@ -131,12 +128,7 @@ impl Prefix {
     }
 
     pub fn populate_applications(&mut self) {
-        self.applications = self
-            .find_relative_executables()
-            .into_iter()
-            .map(|path| path.to_string_lossy().into_owned())
-            .map(Application::new)
-            .collect();
+        self.found_applications = self.find_relative_executables().into_iter().collect();
     }
 }
 

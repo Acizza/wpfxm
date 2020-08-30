@@ -21,10 +21,8 @@ where
     B: UIBackend,
     P: Panel<B>,
 {
-    pub fn init() -> Result<Self> {
+    pub fn init(panel: P) -> Result<Self> {
         let backend = B::init()?;
-        let panel = P::init().context("failed to init panel")?;
-
         Ok(Self { backend, panel })
     }
 
