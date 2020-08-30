@@ -1,9 +1,8 @@
 pub mod application;
 
-use crate::err::{self, Error, Result};
 use crate::util;
+use anyhow::{anyhow, Context, Result};
 use application::Application;
-use snafu::OptionExt;
 use std::fmt;
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader};
@@ -26,10 +25,15 @@ impl Prefix {
         let path = path.into();
 
         if !is_valid(&path) {
-            return Err(Error::NotAPrefix { path });
+            return Err(anyhow!("{} is not a valid Wine prefix", path.display()));
         }
 
-        let arch = Arch::from_prefix(&path).context(err::NoArchDetected { path: path.clone() })?;
+        let arch = Arch::from_prefix(&path).with_context(|| {
+            anyhow!(
+                "failed to detect prefix architecture for {}",
+                path.display()
+            )
+        })?;
 
         Ok(Self {
             name: name.into(),

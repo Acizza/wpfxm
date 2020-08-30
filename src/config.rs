@@ -1,7 +1,7 @@
-use crate::err::{self, Result};
+use crate::err;
+use anyhow::{anyhow, Context, Result};
 use once_cell::sync::Lazy;
 use serde_derive::{Deserialize, Serialize};
-use snafu::ResultExt;
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
@@ -27,14 +27,17 @@ impl Config {
 
     pub fn load() -> Result<Self> {
         let path = Self::validated_path()?;
-        let contents = fs::read_to_string(&path).context(err::FileIO { path: &path })?;
-        toml::from_str(&contents).context(err::TomlDecode { path })
+        let contents = fs::read_to_string(&path)
+            .with_context(|| anyhow!("failed to read config file at {}", path.display()))?;
+
+        toml::from_str(&contents)
+            .with_context(|| anyhow!("failed to decode config file at {}", path.display()))
     }
 
     pub fn load_or_create() -> Result<Self> {
         match Self::load() {
             Ok(config) => Ok(config),
-            Err(err) if err.is_file_nonexistant() => {
+            Err(err) if err::is_file_nonexistant(&err) => {
                 let config = Self::new();
                 config.save()?;
                 Ok(config)
@@ -45,8 +48,10 @@ impl Config {
 
     pub fn save(&self) -> Result<()> {
         let path = Self::validated_path()?;
-        let serialized = toml::to_string_pretty(self).context(err::TomlEncode { path: &path })?;
-        fs::write(&path, serialized).context(err::FileIO { path })
+        let serialized = toml::to_string_pretty(self).context("failed to encode config file")?;
+
+        fs::write(&path, serialized)
+            .with_context(|| anyhow!("failed to write config file to {}", path.display()))
     }
 
     pub fn validated_path() -> Result<PathBuf> {
@@ -57,9 +62,7 @@ impl Config {
         });
 
         if !CONFIG_PATH.exists() {
-            fs::create_dir_all(&*CONFIG_PATH).context(err::FileIO {
-                path: CONFIG_PATH.clone(),
-            })?;
+            fs::create_dir_all(&*CONFIG_PATH).context("failed to create config file dir")?;
         }
 
         let mut path = CONFIG_PATH.clone();

@@ -1,5 +1,4 @@
-use crate::err::{self, Result};
-use snafu::ResultExt;
+use anyhow::{anyhow, Context, Result};
 use std::borrow::Cow;
 use std::fs::{self, DirEntry};
 use std::path::{Path, PathBuf};
@@ -9,13 +8,17 @@ where
     P: AsRef<Path>,
 {
     let dir = dir.as_ref();
-    let entries = fs::read_dir(dir).context(err::FileIO { path: dir })?;
+    let entries = fs::read_dir(dir).with_context(|| anyhow!("failed to read {}", dir.display()))?;
 
     let mut dirs = Vec::new();
 
     for entry in entries {
-        let entry = entry.context(err::EntryIO { dir })?;
-        let etype = entry.file_type().context(err::EntryIO { dir })?;
+        let entry =
+            entry.with_context(|| anyhow!("failed to read dir entry in {}", dir.display()))?;
+
+        let etype = entry
+            .file_type()
+            .with_context(|| anyhow!("failed to read dir entry in {}", dir.display()))?;
 
         if !etype.is_dir() {
             continue;

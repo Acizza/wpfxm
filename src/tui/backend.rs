@@ -1,6 +1,5 @@
-use crate::err::{self, Result};
+use anyhow::{Context, Result};
 use chrono::Duration;
-use snafu::ResultExt;
 use std::io;
 use std::sync::mpsc;
 use std::thread;
@@ -77,6 +76,8 @@ impl UIEvents {
 
     #[inline(always)]
     pub fn next(&self) -> Result<UIEvent> {
-        self.0.recv().context(err::MPSCRecv)
+        self.0
+            .recv()
+            .context("failed to receive MPSC channel event")
     }
 }

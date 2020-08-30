@@ -1,48 +1,30 @@
 pub mod backend;
-mod component;
+mod panel;
 
-use crate::config::Config;
-use crate::err::{Error, Result};
-use crate::prefix::Prefix;
+use anyhow::{Context, Result};
 use backend::{UIBackend, UIEvent, UIEvents};
 use chrono::Duration;
-use component::applications::Applications;
-use component::hooks::Hooks;
-use component::tabs::{GenericTab, Tab, TabList};
-use component::Component;
-use generic_array::arr;
+use panel::Panel;
 use termion::event::Key;
 use tui::backend::Backend;
-use tui::layout::{Constraint, Direction, Layout};
-use typenum::U2;
 
-pub struct TUI<B: Backend> {
-    backend: UIBackend<B>,
-    state: State,
-    tabs: TabList<B, U2>,
-}
-
-impl<B> TUI<B>
+pub struct PanelHandler<B, P>
 where
     B: Backend,
+    P: Panel<B>,
 {
-    #[inline(always)]
+    backend: UIBackend<B>,
+    panel: P,
+}
+
+impl<B, P> PanelHandler<B, P>
+where
+    B: Backend,
+    P: Panel<B>,
+{
     pub fn init(backend: UIBackend<B>) -> Result<Self> {
-        let mut state = State::init()?;
-
-        let tabs = arr![GenericTab<B>;
-            Tab::new(
-                "Applications",
-                Box::new(Applications::init(&mut state)) as Box<dyn Component<B>>,
-            ),
-            Tab::new("Hooks", Box::new(Hooks::new()) as Box<dyn Component<B>>),
-        ];
-
-        Ok(Self {
-            backend,
-            state,
-            tabs: TabList::new("View", tabs),
-        })
+        let panel = P::init().context("failed to init panel")?;
+        Ok(Self { backend, panel })
     }
 
     pub fn run(mut self) -> Result<()> {
@@ -58,7 +40,7 @@ where
                         break Ok(());
                     }
                 }
-                UIEvent::Tick => self.tick(),
+                UIEvent::Tick => self.tick()?,
             }
         }
     }
@@ -67,10 +49,9 @@ where
         self.backend.terminal.clear().map_err(Into::into)
     }
 
-    fn tick(&mut self) {
-        if let LogResult::Err(_, _) = self.tabs.tick(&mut self.state) {
-            unimplemented!()
-        }
+    #[inline(always)]
+    fn tick(&mut self) -> Result<()> {
+        self.panel.tick()
     }
 
     /// Process a key input for all UI components.
@@ -81,120 +62,23 @@ where
             return true;
         }
 
-        if let LogResult::Err(_, _) = self.tabs.process_key(key, &mut self.state) {
-            unimplemented!()
-        }
+        self.panel
+            .process_key(key)
+            .context("key processing for panel failed");
 
         false
     }
 
-    fn draw_internal(&mut self) -> Result<()> {
+    fn draw(&mut self) -> Result<()> {
         // We need to remove the mutable borrow on self so we can call other mutable methods on it during our draw call.
         // This *should* be completely safe as none of the methods we need to call can mutate our backend.
         let term: *mut _ = &mut self.backend.terminal;
         let term: &mut _ = unsafe { &mut *term };
 
         term.draw(|mut frame| {
-            let tab_splitter = Layout::default()
-                .direction(Direction::Vertical)
-                .constraints([Constraint::Length(3), Constraint::Percentage(100)].as_ref())
-                .split(frame.size());
-
-            self.tabs.content_draw_rect = tab_splitter[1];
-            self.tabs.draw(&self.state, tab_splitter[0], &mut frame);
+            self.panel.draw(frame.size(), &mut frame);
         })?;
 
         Ok(())
-    }
-
-    fn draw(&mut self) -> Result<()> {
-        self.draw_internal()?;
-
-        self.tabs.after_draw(&mut self.backend);
-
-        Ok(())
-    }
-}
-
-pub struct State {
-    prefixes: WrappingSelection<Prefix>,
-    config: Config,
-}
-
-impl State {
-    fn init() -> Result<Self> {
-        let config = Config::load_or_create()?;
-
-        let prefixes = {
-            let mut pfxs = Prefix::all_from_dir(&config.prefix_path)?;
-            pfxs.sort_unstable_by(|x, y| x.name.cmp(&y.name));
-            pfxs.into()
-        };
-
-        Ok(Self { prefixes, config })
-    }
-}
-
-pub enum LogResult {
-    Ok,
-    Err(String, Error),
-}
-
-pub struct WrappingSelection<T> {
-    items: Vec<T>,
-    selected: usize,
-}
-
-impl<T> WrappingSelection<T> {
-    #[inline(always)]
-    pub fn new<I>(items: I) -> Self
-    where
-        I: Into<Vec<T>>,
-    {
-        Self {
-            items: items.into(),
-            selected: 0,
-        }
-    }
-
-    #[inline(always)]
-    pub fn selected(&self) -> Option<&T> {
-        self.items.get(self.selected)
-    }
-
-    #[inline(always)]
-    pub fn selected_mut(&mut self) -> Option<&mut T> {
-        self.items.get_mut(self.selected)
-    }
-
-    #[inline(always)]
-    pub fn index(&self) -> usize {
-        self.selected
-    }
-
-    #[inline(always)]
-    pub fn items(&self) -> &Vec<T> {
-        &self.items
-    }
-
-    #[inline(always)]
-    pub fn increment(&mut self) {
-        let next = self.selected + 1;
-        self.selected = if next >= self.items.len() { 0 } else { next };
-    }
-
-    #[inline(always)]
-    pub fn decrement(&mut self) {
-        self.selected = if self.selected == 0 {
-            self.items.len().saturating_sub(1)
-        } else {
-            self.selected - 1
-        }
-    }
-}
-
-impl<T> From<Vec<T>> for WrappingSelection<T> {
-    fn from(items: Vec<T>) -> Self {
-        Self::new(items)
     }
 }

@@ -4,22 +4,11 @@ mod prefix;
 mod tui;
 mod util;
 
-use crate::err::Result;
 use crate::tui::backend::UIBackend;
-use crate::tui::TUI;
+use anyhow::Result;
 
-fn main() {
-    if let Err(err) = run() {
-        err::display_error(err);
-        std::process::exit(1);
-    }
-}
-
-fn run() -> Result<()> {
+fn main() -> Result<()> {
     let backend = UIBackend::init()?;
-    let tui = TUI::init(backend)?;
-
-    tui.run()?;
 
     Ok(())
 }
