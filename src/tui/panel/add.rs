@@ -1,5 +1,6 @@
 use super::Panel;
 use crate::config::Config;
+use crate::prefix::application::Applications;
 use crate::prefix::Prefix;
 use crate::tui::backend::UIBackend;
 use anyhow::{Context, Result};
@@ -13,6 +14,7 @@ use tui::widgets::{Block, Borders, List, ListItem, ListState, Paragraph};
 pub struct AddPanel {
     list_state: ListState,
     prefix: Prefix,
+    applications: Applications,
 }
 
 impl AddPanel {
@@ -23,20 +25,23 @@ impl AddPanel {
         let config = Config::load_or_create()?;
         let pfx_path = config.prefix_path.join(&pfx_name);
 
-        let mut prefix = Prefix::from_path(pfx_path, pfx_name).context("failed to load prefix")?;
-        prefix.populate_applications();
+        let prefix = Prefix::from_path(pfx_path, pfx_name).context("failed to load prefix")?;
+        let applications = Applications::find_in_prefix(&prefix);
 
         let mut list_state = ListState::default();
         list_state.select(Some(0));
 
-        Ok(Self { list_state, prefix })
+        Ok(Self {
+            list_state,
+            prefix,
+            applications,
+        })
     }
 
     fn draw_list<B: UIBackend>(&mut self, rect: Rect, frame: &mut Frame<B::Backend>) {
         let items = self
-            .prefix
-            .found_applications
-            .iter()
+            .applications
+            .stripped_iter()
             .map(|app| app.to_string_lossy())
             .map(Span::raw)
             .map(ListItem::new)
@@ -68,7 +73,7 @@ impl AddPanel {
         frame.render_widget(left_widget, layout[0]);
 
         let right_text = Span::styled(
-            "Enter to add application",
+            "Press enter to add selected",
             Style::default().fg(Color::DarkGray),
         );
         let right_widget = Paragraph::new(right_text).alignment(Alignment::Center);
@@ -89,12 +94,12 @@ impl<B: UIBackend> Panel<B> for AddPanel {
                 let new_index = match key {
                     Key::Up => {
                         if selected == 0 {
-                            self.prefix.found_applications.len() - 1
+                            self.applications.found.len() - 1
                         } else {
                             selected - 1
                         }
                     }
-                    Key::Down => (selected + 1) % self.prefix.found_applications.len(),
+                    Key::Down => (selected + 1) % self.applications.found.len(),
                     _ => unreachable!(),
                 };
 

@@ -1,3 +1,5 @@
+pub mod application;
+
 use crate::util;
 use anyhow::{anyhow, Context, Result};
 use std::fmt;
@@ -10,7 +12,6 @@ pub struct Prefix {
     pub name: String,
     pub arch: Arch,
     pub path: PathBuf,
-    pub found_applications: Vec<PathBuf>,
 }
 
 impl Prefix {
@@ -36,7 +37,6 @@ impl Prefix {
             name: name.into(),
             arch,
             path,
-            found_applications: Vec::new(),
         })
     }
 
@@ -54,81 +54,6 @@ impl Prefix {
             .collect();
 
         Ok(prefixes)
-    }
-
-    fn find_execs_and_dirs(path: &Path, base: &Path) -> (Vec<PathBuf>, Vec<PathBuf>) {
-        const EXCLUDE_FOLDERS: [&str; 4] = [
-            "windows",
-            "windows nt",
-            "windows media player",
-            "internet explorer",
-        ];
-
-        let entries = match fs::read_dir(path) {
-            Ok(entries) => entries,
-            Err(_) => return (Vec::new(), Vec::new()),
-        };
-
-        let mut execs = Vec::new();
-        let mut dirs = Vec::new();
-
-        for entry in entries {
-            let entry = match entry {
-                Ok(entry) => entry,
-                _ => continue,
-            };
-
-            let file_type = match entry.file_type() {
-                Ok(ftype) => ftype,
-                _ => continue,
-            };
-
-            let filename = entry.file_name();
-            let filename = filename.to_string_lossy();
-
-            if file_type.is_dir() {
-                if EXCLUDE_FOLDERS
-                    .iter()
-                    .any(|&exclude| filename.eq_ignore_ascii_case(exclude))
-                {
-                    continue;
-                }
-
-                dirs.push(entry.path());
-                continue;
-            }
-
-            if !filename.ends_with(".exe") {
-                continue;
-            }
-
-            let path = util::strip_base_path(base, entry.path());
-            execs.push(path);
-        }
-
-        (execs, dirs)
-    }
-
-    /// Finds all executables within the prefix and returns their relative path.
-    ///
-    /// Implementation note: a linear solution is used to scan directories instead of a recursive one,
-    /// so there isn't a stack overflow risk.
-    pub fn find_relative_executables(&self) -> Vec<PathBuf> {
-        let (mut execs, mut dirs) = Self::find_execs_and_dirs(&self.path, &self.path);
-
-        while !dirs.is_empty() {
-            let dir = dirs.swap_remove(0);
-            let (new_execs, new_dirs) = Self::find_execs_and_dirs(&dir, &self.path);
-
-            execs.extend(new_execs);
-            dirs.extend(new_dirs);
-        }
-
-        execs
-    }
-
-    pub fn populate_applications(&mut self) {
-        self.found_applications = self.find_relative_executables().into_iter().collect();
     }
 }
 
@@ -224,4 +149,63 @@ where
     };
 
     drive_metadata.is_dir()
+}
+
+fn find_files_with_extension(path: &Path, extension: &str) -> (Vec<PathBuf>, Vec<PathBuf>) {
+    const EXCLUDE_FOLDERS: [&str; 4] = [
+        "windows",
+        "windows nt",
+        "windows media player",
+        "internet explorer",
+    ];
+
+    let entries = match fs::read_dir(path) {
+        Ok(entries) => entries,
+        Err(_) => return (Vec::new(), Vec::new()),
+    };
+
+    let mut execs = Vec::new();
+    let mut dirs = Vec::new();
+
+    for entry in entries {
+        let entry = match entry {
+            Ok(entry) => entry,
+            _ => continue,
+        };
+
+        let file_type = match entry.file_type() {
+            Ok(ftype) => ftype,
+            _ => continue,
+        };
+
+        let filename = entry.file_name();
+        let filename = filename.to_string_lossy();
+
+        if file_type.is_dir() {
+            if EXCLUDE_FOLDERS
+                .iter()
+                .any(|&exclude| filename.eq_ignore_ascii_case(exclude))
+            {
+                continue;
+            }
+
+            dirs.push(entry.path());
+            continue;
+        }
+
+        let path = entry.path();
+
+        match path.extension() {
+            Some(ext) => {
+                if !ext.to_string_lossy().eq_ignore_ascii_case(extension) {
+                    continue;
+                }
+            }
+            None => continue,
+        }
+
+        execs.push(path);
+    }
+
+    (execs, dirs)
 }
