@@ -1,0 +1,44 @@
+{
+  "name": "wpfxm",
+  "version": "0.1.0",
+  "config": {
+    "dev_port": "3000"
+  },
+  "private": true,
+  "main": "src/main.js",
+  "homepage": "./",
+  "dependencies": {
+    "@types/node": "^12.12.62",
+    "@types/react": "^16.9.49",
+    "@types/react-dom": "^16.9.8",
+    "node-sass": "^4.14.1",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-scripts": "3.4.3"
+  },
+  "scripts": {
+    "dev": "NODE_ENV=development concurrently npm:dev:react npm:dev:electron",
+    "dev:react": "NODE_ENV=development PORT=$npm_package_config_dev_port react-scripts start",
+    "dev:electron": "NODE_ENV=development wait-on http://localhost:$npm_package_config_dev_port && electron .",
+    "electron": "electron .",
+    "build": "react-scripts build"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      "last 2 chrome version"
+    ],
+    "development": [
+      "last 2 chrome version"
+    ]
+  },
+  "devDependencies": {
+    "@yarnpkg/pnpify": "^2.2.1",
+    "concurrently": "^5.3.0",
+    "electron": "^10.1.1",
+    "typescript": "~4.0.3",
+    "wait-on": "^5.2.0"
+  }
+}
