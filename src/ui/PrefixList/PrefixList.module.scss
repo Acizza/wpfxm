@@ -1,0 +1,9 @@
+@import "base";
+
+.panel {
+  @include panel;
+  @include border-right(0.1em);
+  display: flex;
+  flex: 0 1 15em;
+  background-color: $bg-secondary;
+}
