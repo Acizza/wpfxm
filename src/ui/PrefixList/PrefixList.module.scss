@@ -1,9 +1,44 @@
 @import "base";
 
+$highlight-border-color: #1d556b;
+$highlight-duration: 250ms;
+$selected-border-color: #1d6b3e;
+
+@mixin selectedPrefix($border-color) {
+  @include border(left, 0.12em, $border-color);
+  background-color: $hover-color;
+}
+
 .panel {
-  @include panel;
-  @include border-right(0.1em);
-  display: flex;
-  flex: 0 1 15em;
-  background-color: $bg-secondary;
+  & {
+    @include border(right, 0.1em);
+    display: flex;
+    flex-direction: column;
+    flex: 0 1 8em;
+    background-color: $bg-secondary;
+    color: $text-secondary;
+    font-size: 1.25em;
+    line-height: 2em;
+  }
+
+  .prefix {
+    & {
+      @include panel-padding;
+      // If we don't include an initial border, there is a white gap
+      // that appears during the transition
+      @include border(left, 0, $highlight-border-color);
+
+      white-space: nowrap;
+      transition: background-color $highlight-duration ease-in-out,
+        border-left $highlight-duration linear;
+    }
+
+    &:hover:not(.prefixSelected) {
+      @include selectedPrefix($highlight-border-color);
+    }
+  }
+
+  .prefixSelected {
+    @include selectedPrefix($selected-border-color);
+  }
 }
