@@ -9,12 +9,24 @@ $text-secondary: #9d9da8;
 $border-color: #222229;
 $hover-color: #282830;
 
+$scrollbar-thumb-color: #1f1e1e;
+
 @mixin panel-padding {
   padding: 0.25em 1em;
 }
 
 @mixin border($side, $size, $color: $border-color) {
   border-#{$side}: $size solid $color;
+}
+
+@mixin scrollbar() {
+  &::-webkit-scrollbar {
+    background-color: $border-color;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: $scrollbar-thumb-color;
+  }
 }
 
 body {

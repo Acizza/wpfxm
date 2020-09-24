@@ -12,6 +12,7 @@ $selected-border-color: #1d6b3e;
 .panel {
   & {
     @include border(right, 0.1em);
+    @include scrollbar;
     display: flex;
     flex-direction: column;
     flex: 0 1 8em;
@@ -19,6 +20,7 @@ $selected-border-color: #1d6b3e;
     color: $text-secondary;
     font-size: 1.25em;
     line-height: 2em;
+    overflow: hidden auto;
   }
 
   .prefix {
