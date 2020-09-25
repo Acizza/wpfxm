@@ -15,7 +15,7 @@ $selected-border-color: #1d6b3e;
     @include scrollbar;
     display: flex;
     flex-direction: column;
-    flex: 0 1 8em;
+    flex: 1 0 10em;
     background-color: $bg-secondary;
     color: $text-secondary;
     font-size: 1.25em;

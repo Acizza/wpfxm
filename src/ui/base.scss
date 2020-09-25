@@ -11,6 +11,9 @@ $hover-color: #282830;
 
 $scrollbar-thumb-color: #1f1e1e;
 
+$error-primary: #581414e0;
+$error-secondary: #991b1be0;
+
 @mixin panel-padding {
   padding: 0.25em 1em;
 }
@@ -19,13 +22,16 @@ $scrollbar-thumb-color: #1f1e1e;
   border-#{$side}: $size solid $color;
 }
 
-@mixin scrollbar() {
+@mixin scrollbar(
+  $track-color: $border-color,
+  $thumb-color: $scrollbar-thumb-color
+) {
   &::-webkit-scrollbar {
-    background-color: $border-color;
+    background-color: $track-color;
   }
 
   &::-webkit-scrollbar-thumb {
-    background-color: $scrollbar-thumb-color;
+    background-color: $thumb-color;
   }
 }
 

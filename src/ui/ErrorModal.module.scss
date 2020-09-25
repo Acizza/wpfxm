@@ -1,0 +1,33 @@
+@import "base";
+
+@mixin span-padding {
+  padding: 0.5em;
+}
+
+.errorModal {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  flex: 1 1;
+  z-index: 1;
+  max-width: 20em;
+  max-height: 10em;
+  bottom: 1em;
+  right: 1em;
+  background-color: $error-primary;
+  border: 1px solid $error-secondary;
+  overflow: hidden;
+}
+
+.context {
+  @include span-padding;
+  font-size: 1.1em;
+  padding-bottom: 0.75em;
+}
+
+.message {
+  @include scrollbar($error-primary, $error-secondary);
+  @include span-padding;
+  overflow: hidden auto;
+}

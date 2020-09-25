@@ -1,16 +1,21 @@
 import React, { useState } from "react";
+import Prefix from "../../core/prefix/prefix";
 import styles from "./PrefixList.module.scss";
 
-function PrefixList(): JSX.Element {
+interface PrefixListProps {
+  prefixes: Prefix[];
+}
+
+function PrefixList(props: PrefixListProps): JSX.Element {
   const [selected, setSelected] = useState<number | undefined>();
 
   return (
     <div className={styles.panel}>
-      {[...Array(10)].map((_, i) => (
-        <Prefix
+      {props.prefixes.map((pfx, i) => (
+        <PrefixEntry
           key={i}
-          index={i}
-          selected={selected}
+          prefix={pfx}
+          selected={i === selected}
           onClick={() => setSelected(i)}
         />
       ))}
@@ -18,21 +23,20 @@ function PrefixList(): JSX.Element {
   );
 }
 
-interface PrefixProps {
-  index: number;
-  selected: number | undefined;
+interface PrefixEntryProps {
+  prefix: Prefix;
+  selected: boolean;
   onClick?: (event: React.MouseEvent) => void;
 }
 
-function Prefix(props: PrefixProps): JSX.Element {
-  const selectedClass =
-    props.selected === props.index ? styles.prefixSelected : "";
+function PrefixEntry(props: PrefixEntryProps): JSX.Element {
+  let classes = styles.prefix;
 
-  const classes = `${styles.prefix} ${selectedClass}`;
+  if (props.selected) classes += ` ${styles.prefixSelected}`;
 
   return (
     <span className={classes} onClick={props.onClick}>
-      Prefix {props.index}
+      {props.prefix.name}
     </span>
   );
 }

@@ -5,7 +5,7 @@
     "dev_port": "3000"
   },
   "private": true,
-  "main": "src/main.js",
+  "main": "build/core/main.js",
   "homepage": "./",
   "dependencies": {
     "@types/node": "^12.12.62",
@@ -17,9 +17,10 @@
     "react-scripts": "3.4.3"
   },
   "scripts": {
-    "dev": "NODE_ENV=development concurrently npm:dev:react npm:dev:electron",
-    "dev:react": "NODE_ENV=development PORT=$npm_package_config_dev_port react-scripts start",
-    "dev:electron": "NODE_ENV=development wait-on http://localhost:$npm_package_config_dev_port && electron .",
+    "dev": "NODE_ENV=development concurrently npm:dev:react npm:dev:electron:watch npm:dev:electron",
+    "dev:react": "NODE_ENV=development PORT=$npm_package_config_dev_port react-app-rewired start",
+    "dev:electron:watch": "tsc -p src/core -w",
+    "dev:electron": "NODE_ENV=development wait-on http://localhost:$npm_package_config_dev_port && tsc -p src/core && electron .",
     "electron": "electron .",
     "build": "react-scripts build"
   },
@@ -38,6 +39,7 @@
     "@yarnpkg/pnpify": "^2.2.1",
     "concurrently": "^5.3.0",
     "electron": "^10.1.1",
+    "react-app-rewired": "^2.1.6",
     "typescript": "~4.0.3",
     "wait-on": "^5.2.0"
   }

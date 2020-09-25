@@ -12525,6 +12525,19 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
+"react-app-rewired@npm:^2.1.6":
+  version: 2.1.6
+  resolution: "react-app-rewired@npm:2.1.6"
+  dependencies:
+    semver: ^5.6.0
+  peerDependencies:
+    react-scripts: ">=2.1.3"
+  bin:
+    react-app-rewired: ./bin/index.js
+  checksum: 18cdbe10c5a5eb1e4d30c27c00fc4f20e558a5674988bf471b8629dae8522ab41deeba92278466a7a1e2e11ca37dd4693a34f539d2d0d8a0f52e108f37f480a2
+  languageName: node
+  linkType: hard
+
 "react-dev-utils@npm:^10.2.1":
   version: 10.2.1
   resolution: "react-dev-utils@npm:10.2.1"
@@ -15849,6 +15862,7 @@ typescript@~4.0.3:
     electron: ^10.1.1
     node-sass: ^4.14.1
     react: ^16.13.1
+    react-app-rewired: ^2.1.6
     react-dom: ^16.13.1
     react-scripts: 3.4.3
     typescript: ~4.0.3
