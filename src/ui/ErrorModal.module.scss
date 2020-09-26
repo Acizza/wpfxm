@@ -1,9 +1,5 @@
 @import "base";
 
-@mixin span-padding {
-  padding: 0.5em;
-}
-
 .errorModal {
   position: fixed;
   display: flex;
@@ -11,7 +7,7 @@
   text-align: center;
   flex: 1 1;
   z-index: 1;
-  max-width: 20em;
+  max-width: 25em;
   max-height: 10em;
   bottom: 1em;
   right: 1em;
@@ -20,14 +16,33 @@
   overflow: hidden;
 }
 
-.context {
-  @include span-padding;
-  font-size: 1.1em;
-  padding-bottom: 0.75em;
+.header {
+  $header-padding: 0.25em;
+
+  & {
+    display: flex;
+    padding: 0.1em 0 $header-padding $header-padding;
+    font-size: 1.1em;
+  }
+
+  .context {
+    padding-top: 0.1em;
+    padding-bottom: $header-padding;
+    flex: 1;
+  }
+
+  .closeIcon {
+    flex: 0;
+    height: 1em;
+    width: 1em;
+    padding: $header-padding;
+    color: $text-primary;
+    cursor: pointer;
+  }
 }
 
 .message {
   @include scrollbar($error-primary, $error-secondary);
-  @include span-padding;
   overflow: hidden auto;
+  padding: 0.5em;
 }
