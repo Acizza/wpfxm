@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import Prefix from "../core/prefix/prefix";
 import "./App.scss";
 import MainPanel from "./MainPanel/MainPanel";
-import PrefixList from "./PrefixList/PrefixList";
+import SidePanel from "./SidePanel/SidePanel";
 import ErrorModal, { Error } from "./ErrorModal";
 
 function App() {
@@ -28,7 +28,7 @@ function App() {
 
   return (
     <main>
-      <PrefixList prefixes={prefixes} />
+      <SidePanel prefixes={prefixes} />
       {loading && <span>Loading</span>}
       <MainPanel />
       {error && <ErrorModal {...error} />}

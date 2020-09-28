@@ -6,7 +6,9 @@ $bg-secondary: #2e2d35;
 $text-primary: #d5d5d8;
 $text-secondary: #9d9da8;
 
-$border-color: #222229;
+$border-primary: #222229;
+$border-secondary: #292830;
+
 $hover-color: #282830;
 
 $scrollbar-thumb-color: #1f1e1e;
@@ -18,12 +20,12 @@ $error-secondary: #991b1be0;
   padding: 0.25em 1em;
 }
 
-@mixin border($side, $size, $color: $border-color) {
+@mixin border($side, $size, $color: $border-primary) {
   border-#{$side}: $size solid $color;
 }
 
 @mixin scrollbar(
-  $track-color: $border-color,
+  $track-color: $border-primary,
   $thumb-color: $scrollbar-thumb-color
 ) {
   &::-webkit-scrollbar {

@@ -1,0 +1,10 @@
+@import "base";
+
+.sidePanel {
+  @include border(right, 0.1em);
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 10em;
+  background-color: $bg-secondary;
+  color: $text-secondary;
+}

@@ -1,0 +1,15 @@
+@import "base";
+
+.header {
+  @include border(bottom, 0.1em, $border-secondary);
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5em 0.75em;
+  font-size: 1.5em;
+  cursor: default;
+}
+
+.settingsIcon {
+  align-self: center;
+  cursor: pointer;
+}
