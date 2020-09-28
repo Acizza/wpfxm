@@ -7,6 +7,10 @@
     "outDir": "../../build",
     "rootDir": "../",
     "noEmitOnError": true,
-    "typeRoots": ["node_modules/@types"]
+    "typeRoots": ["node_modules/@types"],
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true
   }
 }
