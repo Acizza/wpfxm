@@ -7,7 +7,7 @@ interface PrefixListProps {
 }
 
 function PrefixList(props: PrefixListProps): JSX.Element {
-  const [selected, setSelected] = useState<number | undefined>();
+  const [selected, setSelected] = useSelection();
 
   return (
     <div className={styles.panel}>
@@ -21,6 +21,18 @@ function PrefixList(props: PrefixListProps): JSX.Element {
       ))}
     </div>
   );
+}
+
+// TODO: The return type must be any[] because of this bug:
+// https://github.com/microsoft/TypeScript/issues/36390
+function useSelection(initial?: number): any[] {
+  const [state, setState] = useState(initial);
+
+  function set(value?: number) {
+    setState(value === state ? undefined : value);
+  }
+
+  return [state, set];
 }
 
 interface PrefixEntryProps {
