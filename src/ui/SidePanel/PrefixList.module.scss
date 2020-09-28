@@ -28,6 +28,7 @@ $selected-border-primary: #1d6b3e;
       @include border(left, 0, $highlight-border-primary);
 
       white-space: nowrap;
+      cursor: pointer;
       transition: background-color $highlight-duration ease-in-out,
         border-left $highlight-duration linear;
     }
