@@ -31,7 +31,7 @@ function PrefixList(props: PrefixListProps): JSX.Element {
     ))
   );
 
-  return <div className={styles.panel}>{content}</div>;
+  return <ul className={styles.panel}>{content}</ul>;
 }
 
 // TODO: The return type must be any[] because of this bug:
@@ -61,9 +61,9 @@ function PrefixEntry(props: PrefixEntryProps): JSX.Element {
   if (props.selected) classes += ` ${styles.prefixSelected}`;
 
   return (
-    <span className={classes} onClick={props.onClick}>
+    <li className={classes} onClick={props.onClick}>
       {props.prefix.name}
-    </span>
+    </li>
   );
 }
 
