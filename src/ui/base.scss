@@ -29,6 +29,11 @@ $error-secondary: #991b1be0;
   border-#{$side}: $size solid $color;
 }
 
+@mixin size($size) {
+  width: $size;
+  height: $size;
+}
+
 @mixin scrollbar(
   $track-color: $border-primary,
   $thumb-color: $scrollbar-thumb-color

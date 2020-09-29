@@ -21,9 +21,8 @@ $selected-border-primary: #1d6b3e;
   }
 
   .loadIcon {
+    @include size(2em);
     margin: auto;
-    width: 2em;
-    height: 2em;
   }
 
   .prefix {

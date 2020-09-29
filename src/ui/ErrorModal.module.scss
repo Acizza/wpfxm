@@ -32,9 +32,8 @@
   }
 
   .closeIcon {
+    @include size(1em);
     flex: 0;
-    height: 1em;
-    width: 1em;
     padding: $header-padding;
     color: $text-primary;
     cursor: pointer;

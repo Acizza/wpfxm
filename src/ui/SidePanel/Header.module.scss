@@ -17,8 +17,7 @@
 }
 
 .settingsIcon {
+  @include size(0.75em);
   align-self: center;
   cursor: pointer;
-  width: 0.75em;
-  height: 0.75em;
 }
