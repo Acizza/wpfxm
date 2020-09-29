@@ -4,15 +4,75 @@ import "./App.scss";
 import MainPanel from "./MainPanel/MainPanel";
 import SidePanel from "./SidePanel/SidePanel";
 import ErrorModal, { Error } from "./ErrorModal";
+import Settings from "./Settings/Settings";
 
 function App() {
+  // TODO: get path from user
+  const [prefixes, , loading, error] = useScannedPrefixes("~/games/wine");
+  const [panel, togglePanel, resetPanel] = usePanelToggle(Panel.MainPanel);
+
+  let renderedPanel: JSX.Element;
+
+  switch (panel as Panel) {
+    case Panel.MainPanel:
+      renderedPanel = <MainPanel />;
+      break;
+    case Panel.Settings:
+      renderedPanel = <Settings />;
+      break;
+  }
+
+  return (
+    <main>
+      <SidePanel
+        prefixes={prefixes}
+        loading={loading}
+        onToggleSettings={togglePanel}
+        onPrefixSelected={(_, selected) => selected && resetPanel()}
+      />
+      {renderedPanel}
+      {error && <ErrorModal {...error} />}
+    </main>
+  );
+}
+
+enum Panel {
+  Settings,
+  MainPanel,
+}
+
+// TODO: The return type must be any[] because of this bug:
+// https://github.com/microsoft/TypeScript/issues/36390
+function usePanelToggle(initial: Panel): any[] {
+  const [panel, setPanel] = useState(initial);
+
+  function toggle() {
+    switch (panel) {
+      case Panel.MainPanel:
+        setPanel(Panel.Settings);
+        break;
+      case Panel.Settings:
+        setPanel(Panel.MainPanel);
+        break;
+    }
+  }
+
+  function reset() {
+    setPanel(initial);
+  }
+
+  return [panel, toggle, reset];
+}
+
+// TODO: The return type must be any[] because of this bug:
+// https://github.com/microsoft/TypeScript/issues/36390
+function useScannedPrefixes(initialPath?: string): any[] {
   const [prefixes, setPrefixes] = useState<Prefix[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | undefined>();
+  const [error, setError] = useState<Error | undefined>(undefined);
 
-  useEffect(() => {
-    // TODO: get path from user
-    Prefix.allFromDir("~/.wine")
+  function set(path: string) {
+    Prefix.allFromDir(path)
       .then((pfxs) => {
         setPrefixes(pfxs);
         setError(undefined);
@@ -24,16 +84,13 @@ function App() {
         })
       )
       .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    if (initialPath) set(initialPath);
   }, []);
 
-  return (
-    <main>
-      <SidePanel prefixes={prefixes} />
-      {loading && <span>Loading</span>}
-      <MainPanel />
-      {error && <ErrorModal {...error} />}
-    </main>
-  );
+  return [prefixes, set, loading, error];
 }
 
 export default App;

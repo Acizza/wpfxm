@@ -16,6 +16,11 @@ $scrollbar-thumb-color: #1f1e1e;
 $error-primary: #581414e0;
 $error-secondary: #991b1be0;
 
+@mixin primary-panel {
+  @include panel-padding;
+  flex: 1 1 60%;
+}
+
 @mixin panel-padding {
   padding: 0.25em 1em;
 }

@@ -6,13 +6,20 @@ import styles from "./SidePanel.module.scss";
 
 interface SidePanelProps {
   prefixes: Prefix[];
+  loading: boolean;
+  onToggleSettings?: () => void;
+  onPrefixSelected?: (pfx: Prefix, selected: boolean) => void;
 }
 
 function SidePanel(props: SidePanelProps): JSX.Element {
   return (
     <div className={styles.sidePanel}>
-      <Header />
-      <PrefixList prefixes={props.prefixes} />
+      <Header onToggleSettings={props.onToggleSettings} />
+      <PrefixList
+        prefixes={props.prefixes}
+        loading={props.loading}
+        onPrefixSelected={props.onPrefixSelected}
+      />
     </div>
   );
 }

@@ -5,14 +5,22 @@ import styles from "./Header.module.scss";
 // @ts-ignore: This import produces an error, but works perfectly when ignored...
 import { name, version } from "../../../package.json";
 
-function Header(): JSX.Element {
+interface HeaderProps {
+  onToggleSettings?: () => void;
+}
+
+function Header(props: HeaderProps): JSX.Element {
   return (
     <div className={styles.header}>
       <div>
         <span>{name}</span>
         <span className={styles.version}>{version}</span>
       </div>
-      <FontAwesomeIcon className={styles.settingsIcon} icon={faCog} />
+      <FontAwesomeIcon
+        className={styles.settingsIcon}
+        icon={faCog}
+        onClick={() => props.onToggleSettings?.()}
+      />
     </div>
   );
 }

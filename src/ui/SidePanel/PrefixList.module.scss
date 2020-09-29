@@ -20,6 +20,12 @@ $selected-border-primary: #1d6b3e;
     overflow: hidden auto;
   }
 
+  .loadIcon {
+    margin: auto;
+    width: 2em;
+    height: 2em;
+  }
+
   .prefix {
     & {
       @include panel-padding;
