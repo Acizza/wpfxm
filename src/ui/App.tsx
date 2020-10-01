@@ -5,6 +5,7 @@ import MainPanel from "./MainPanel/MainPanel";
 import SidePanel from "./SidePanel/SidePanel";
 import ErrorModal, { Error } from "./ErrorModal";
 import Settings from "./Settings/Settings";
+import { ConfigContext, useGlobalConfig } from "../shared/config";
 
 enum Panel {
   Settings,
@@ -12,8 +13,10 @@ enum Panel {
 }
 
 function App() {
-  // TODO: get path from user
-  const [prefixes, , loading, error] = useScannedPrefixes("~/games/wine");
+  const cfgState = useGlobalConfig();
+  const [prefixes, , loading, error] = useScannedPrefixes(
+    cfgState.config.prefixPath
+  );
   const [panel, togglePanel, resetPanel] = usePanelToggle(Panel.MainPanel);
 
   let renderedPanel: JSX.Element;
@@ -29,14 +32,16 @@ function App() {
 
   return (
     <main>
-      <SidePanel
-        prefixes={prefixes}
-        loading={loading}
-        onToggleSettings={togglePanel}
-        onPrefixSelected={(_, selected) => selected && resetPanel()}
-      />
-      {renderedPanel}
-      {error && <ErrorModal {...error} />}
+      <ConfigContext.Provider value={cfgState}>
+        <SidePanel
+          prefixes={prefixes}
+          loading={loading}
+          onToggleSettings={togglePanel}
+          onPrefixSelected={(_, selected) => selected && resetPanel()}
+        />
+        {renderedPanel}
+        {error && <ErrorModal {...error} />}
+      </ConfigContext.Provider>
     </main>
   );
 }

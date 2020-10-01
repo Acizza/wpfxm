@@ -16,6 +16,9 @@ $scrollbar-thumb-color: #1f1e1e;
 $error-primary: #581414e0;
 $error-secondary: #991b1be0;
 
+$focus-primary: #35323a;
+$focus-secondary: #45434d;
+
 @mixin primary-panel {
   @include panel-padding;
   flex: 1 1 60%;
@@ -52,4 +55,23 @@ body {
   background-color: $bg-primary;
   color: $text-primary;
   margin: 0;
+}
+
+input {
+  border: 0.1em solid $border-primary;
+  outline: none;
+  background-color: $bg-secondary;
+  color: $text-secondary;
+  box-shadow: none;
+  padding: 0.2em;
+
+  &:focus {
+    background-color: $focus-primary;
+    border-color: $focus-secondary;
+  }
+
+  &.error {
+    border-color: $error-secondary !important;
+    outline: none;
+  }
 }
