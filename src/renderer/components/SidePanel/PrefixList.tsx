@@ -1,7 +1,7 @@
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState } from "react";
-import Prefix from "../../core/prefix/prefix";
+import Prefix from "../../../main/prefix/prefix";
 import styles from "./PrefixList.module.scss";
 
 interface PrefixListProps {

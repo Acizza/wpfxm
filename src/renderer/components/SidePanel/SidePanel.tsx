@@ -1,5 +1,5 @@
 import React from "react";
-import Prefix from "../../core/prefix/prefix";
+import Prefix from "../../../main/prefix/prefix";
 import Header from "./Header";
 import PrefixList from "./PrefixList";
 import styles from "./SidePanel.module.scss";

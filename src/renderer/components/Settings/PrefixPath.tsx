@@ -1,8 +1,8 @@
 import React, { ChangeEvent, useContext, useState } from "react";
 import styles from "./PrefixPath.module.scss";
 import * as fs from "fs";
-import { normalizeUnixPath } from "../../core/util";
-import { ConfigContext } from "../../shared/config";
+import { normalizeUnixPath } from "../../../main/util";
+import { ConfigContext } from "../../config";
 
 function PrefixPath(): JSX.Element {
   const configCxt = useContext(ConfigContext);

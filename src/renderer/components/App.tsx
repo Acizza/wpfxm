@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import Prefix from "../core/prefix/prefix";
+import Prefix from "../../main/prefix/prefix";
 import "./App.scss";
 import MainPanel from "./MainPanel/MainPanel";
 import SidePanel from "./SidePanel/SidePanel";
 import ErrorModal, { Error } from "./ErrorModal";
 import Settings from "./Settings/Settings";
-import { ConfigContext, useGlobalConfig } from "../shared/config";
+import { ConfigContext, useGlobalConfig } from "../config";
 
 enum Panel {
   Settings,

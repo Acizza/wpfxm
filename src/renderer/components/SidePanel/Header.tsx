@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React from "react";
 import styles from "./Header.module.scss";
 // @ts-ignore: This import produces an error, but works perfectly when ignored...
-import { name, version } from "../../../package.json";
+import { name, version } from "../../../../package.json";
 
 interface HeaderProps {
   onToggleSettings?: () => void;

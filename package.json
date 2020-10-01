@@ -20,13 +20,13 @@
     "react-scripts": "3.4.3"
   },
   "scripts": {
-    "dev": "NODE_ENV=development concurrently npm:dev:react npm:dev:core:watch npm:dev:electron",
+    "dev": "NODE_ENV=development concurrently npm:dev:react npm:dev:main:watch npm:dev:electron",
     "dev:react": "NODE_ENV=development PORT=$npm_package_config_dev_port react-app-rewired start",
-    "dev:core": "tsc -p src/core",
-    "dev:core:watch": "tsc -p src/core -w",
-    "dev:electron": "NODE_ENV=development wait-on http://localhost:$npm_package_config_dev_port && npm run dev:core && electron .",
+    "dev:main": "tsc -p src/main",
+    "dev:main:watch": "tsc -p src/main -w",
+    "dev:electron": "NODE_ENV=development wait-on http://localhost:$npm_package_config_dev_port && npm run dev:main && electron .",
     "electron": "electron .",
-    "build": "react-app-rewired build && npm run dev:core"
+    "build": "react-app-rewired build && npm run dev:main"
   },
   "eslintConfig": {
     "extends": "react-app"
