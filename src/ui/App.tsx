@@ -6,6 +6,11 @@ import SidePanel from "./SidePanel/SidePanel";
 import ErrorModal, { Error } from "./ErrorModal";
 import Settings from "./Settings/Settings";
 
+enum Panel {
+  Settings,
+  MainPanel,
+}
+
 function App() {
   // TODO: get path from user
   const [prefixes, , loading, error] = useScannedPrefixes("~/games/wine");
@@ -34,11 +39,6 @@ function App() {
       {error && <ErrorModal {...error} />}
     </main>
   );
-}
-
-enum Panel {
-  Settings,
-  MainPanel,
 }
 
 // TODO: The return type must be any[] because of this bug:
@@ -88,7 +88,7 @@ function useScannedPrefixes(initialPath?: string): any[] {
 
   useEffect(() => {
     if (initialPath) set(initialPath);
-  }, []);
+  }, [initialPath]);
 
   return [prefixes, set, loading, error];
 }
