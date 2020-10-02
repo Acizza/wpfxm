@@ -5,28 +5,23 @@
     "dev_port": "3000"
   },
   "private": true,
-  "main": "build/core/main.js",
+  "main": "public/build/electron_main.js",
   "homepage": "./",
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.30",
     "@fortawesome/free-solid-svg-icons": "^5.14.0",
     "@fortawesome/react-fontawesome": "^0.1.11",
-    "@types/node": "^12.12.62",
-    "@types/react": "^16.9.49",
-    "@types/react-dom": "^16.9.8",
-    "node-sass": "^4.14.1",
     "react": "^16.13.1",
-    "react-dom": "^16.13.1",
-    "react-scripts": "3.4.3"
+    "react-dom": "^16.13.1"
   },
   "scripts": {
-    "dev": "NODE_ENV=development concurrently npm:dev:react npm:dev:main:watch npm:dev:electron",
-    "dev:react": "NODE_ENV=development PORT=$npm_package_config_dev_port react-app-rewired start",
-    "dev:main": "tsc -p src/main",
-    "dev:main:watch": "tsc -p src/main -w",
-    "dev:electron": "NODE_ENV=development wait-on http://localhost:$npm_package_config_dev_port && npm run dev:main && electron .",
+    "dev": "concurrently npm:dev:renderer npm:dev:main npm:dev:electron",
+    "dev:renderer": "SASS_PATH=src/renderer/components rollup -c rollup.config.renderer.js -w",
+    "dev:main": "rollup -c rollup.config.main.js -w",
+    "dev:electron:pre": "wait-on public/build/electron_main.js && wait-on public/build/renderer_main.js",
+    "dev:electron": "npm run dev:electron:pre && electron .",
     "electron": "electron .",
-    "build": "react-app-rewired build && npm run dev:main"
+    "build": "rollup -c rollup.config.main.js && SASS_PATH=src/renderer/components rollup -c rollup.config.renderer.js"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -40,10 +35,29 @@
     ]
   },
   "devDependencies": {
+    "@babel/core": "^7.11.6",
+    "@babel/plugin-proposal-class-properties": "^7.10.4",
+    "@babel/preset-env": "^7.11.5",
+    "@babel/preset-react": "^7.10.4",
+    "@babel/preset-typescript": "^7.10.4",
+    "@rollup/plugin-babel": "^5.2.1",
+    "@rollup/plugin-commonjs": "^15.1.0",
+    "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^9.0.0",
+    "@rollup/plugin-replace": "^2.3.3",
+    "@types/node": "^12.12.62",
+    "@types/react": "^16.9.49",
+    "@types/react-dom": "^16.9.8",
     "@yarnpkg/pnpify": "^2.2.1",
+    "builtin-modules": "^3.1.0",
     "concurrently": "^5.3.0",
     "electron": "^10.1.1",
-    "react-app-rewired": "^2.1.6",
+    "node-sass": "^4.14.1",
+    "rollup": "^2.28.2",
+    "rollup-plugin-livereload": "^2.0.0",
+    "rollup-plugin-postcss": "^3.1.8",
+    "rollup-plugin-serve": "^1.0.4",
+    "rollup-plugin-terser": "^7.0.2",
     "typescript": "~4.0.3",
     "wait-on": "^5.2.0"
   }

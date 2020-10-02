@@ -16,7 +16,7 @@ function createWindow(): void {
       `http://localhost:${process.env.npm_package_config_dev_port || 3000}`
     );
   } else {
-    win.loadFile("build/index.html");
+    win.loadFile("public/index.html");
   }
 }
 
