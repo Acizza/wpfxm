@@ -34,9 +34,9 @@ function PrefixList(props: PrefixListProps): JSX.Element {
   return <ul className={styles.panel}>{content}</ul>;
 }
 
-// TODO: The return type must be any[] because of this bug:
-// https://github.com/microsoft/TypeScript/issues/36390
-function useSelection(initial?: number): any[] {
+type SetSelected = (value?: number) => boolean;
+
+function useSelection(initial?: number): [number | undefined, SetSelected] {
   const [state, setState] = useState(initial);
 
   function set(value?: number): boolean {

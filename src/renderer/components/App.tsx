@@ -14,9 +14,7 @@ enum Panel {
 
 function App() {
   const cfgState = useGlobalConfig();
-  const [prefixes, , loading, error] = useScannedPrefixes(
-    cfgState.config.prefixPath
-  );
+  const scannedPfxs = useScannedPrefixes(cfgState.config.prefixPath);
   const [panel, togglePanel, resetPanel] = usePanelToggle(Panel.MainPanel);
 
   let renderedPanel: JSX.Element;
@@ -34,21 +32,22 @@ function App() {
     <main>
       <ConfigContext.Provider value={cfgState}>
         <SidePanel
-          prefixes={prefixes}
-          loading={loading}
+          prefixes={scannedPfxs.prefixes}
+          loading={scannedPfxs.loading}
           onToggleSettings={togglePanel}
           onPrefixSelected={(_, selected) => selected && resetPanel()}
         />
         {renderedPanel}
-        {error && <ErrorModal {...error} />}
+        {scannedPfxs.error && <ErrorModal {...scannedPfxs.error} />}
       </ConfigContext.Provider>
     </main>
   );
 }
 
-// TODO: The return type must be any[] because of this bug:
-// https://github.com/microsoft/TypeScript/issues/36390
-function usePanelToggle(initial: Panel): any[] {
+type Toggle = () => void;
+type Reset = () => void;
+
+function usePanelToggle(initial: Panel): [Panel, Toggle, Reset] {
   const [panel, setPanel] = useState(initial);
 
   function toggle() {
@@ -69,9 +68,14 @@ function usePanelToggle(initial: Panel): any[] {
   return [panel, toggle, reset];
 }
 
-// TODO: The return type must be any[] because of this bug:
-// https://github.com/microsoft/TypeScript/issues/36390
-function useScannedPrefixes(initialPath?: string): any[] {
+interface ScannedPrefixes {
+  prefixes: Prefix[];
+  setPrefixes(path: string): void;
+  loading: boolean;
+  error: Error | undefined;
+}
+
+function useScannedPrefixes(initialPath?: string): ScannedPrefixes {
   const [prefixes, setPrefixes] = useState<Prefix[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | undefined>(undefined);
@@ -95,7 +99,12 @@ function useScannedPrefixes(initialPath?: string): any[] {
     if (initialPath) set(initialPath);
   }, [initialPath]);
 
-  return [prefixes, set, loading, error];
+  return {
+    prefixes,
+    setPrefixes: set,
+    loading,
+    error,
+  };
 }
 
 export default App;
