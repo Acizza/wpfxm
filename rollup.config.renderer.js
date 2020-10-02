@@ -1,4 +1,5 @@
 import replace from "@rollup/plugin-replace";
+import alias from "@rollup/plugin-alias";
 import resolve from "@rollup/plugin-node-resolve";
 import postcss from "rollup-plugin-postcss";
 import babel from "@rollup/plugin-babel";
@@ -24,6 +25,12 @@ export default {
       "process.env.NODE_ENV": JSON.stringify(
         production ? "production" : "development"
       ),
+    }),
+    alias({
+      entries: [
+        { find: "react", replacement: "preact/compat" },
+        { find: "react-dom", replacement: "preact/compat" },
+      ],
     }),
     resolve({
       extensions,
