@@ -12,6 +12,18 @@ const enum Panel {
   MainPanel,
 }
 
+const errors = {
+  noPrefixes: {
+    context: "No Prefixes Found",
+    message:
+      "You can change the path to look for prefixes in by clicking the settings button on the top left.",
+  },
+  prefixLoading: (message: string) => ({
+    context: "Error Loading Prefixes",
+    message,
+  }),
+};
+
 function App() {
   const cfgState = useGlobalConfig();
   const scannedPfxs = useScannedPrefixes(cfgState.config.prefixPath);
@@ -85,14 +97,12 @@ function useScannedPrefixes(initialPath?: string): ScannedPrefixes {
       .invoke(IPC.ScanPrefixes, path)
       .then((pfxs) => {
         setPrefixes(pfxs);
-        setError(undefined);
+
+        const err = pfxs.length === 0 ? errors.noPrefixes : undefined;
+
+        setError(err);
       })
-      .catch((err) =>
-        setError({
-          context: "Error Loading Prefixes",
-          message: err.message,
-        })
-      )
+      .catch((err) => setError(errors.prefixLoading(err.message)))
       .finally(() => setLoading(false));
   }
 

@@ -18,7 +18,9 @@ function PrefixList(props: PrefixListProps): JSX.Element {
     props.onPrefixSelected?.(pfx, isSelected);
   }
 
-  const content = props.loading ? (
+  const displayLoading = props.loading || props.prefixes.length === 0;
+
+  const content = displayLoading ? (
     <FontAwesomeIcon className={styles.loadIcon} icon={faCircleNotch} spin />
   ) : (
     props.prefixes.map((pfx, i) => (
