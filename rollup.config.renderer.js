@@ -44,7 +44,7 @@ export default {
     babel({
       babelHelpers: "bundled",
       extensions,
-      include: "src/**/*",
+      include: ["src/renderer/**/*", "src/shared/**/*"],
     }),
     commonjs(),
     json(),

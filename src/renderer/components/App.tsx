@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
-import Prefix from "../../main/prefix/prefix";
 import "./App.scss";
 import MainPanel from "./MainPanel/MainPanel";
 import SidePanel from "./SidePanel/SidePanel";
 import ErrorModal, { Error } from "./ErrorModal";
 import Settings from "./Settings/Settings";
 import { ConfigContext, useGlobalConfig } from "../config";
+import { IPC } from "../../shared/ipc/event";
 
-enum Panel {
+const enum Panel {
   Settings,
   MainPanel,
 }
@@ -69,19 +69,20 @@ function usePanelToggle(initial: Panel): [Panel, Toggle, Reset] {
 }
 
 interface ScannedPrefixes {
-  prefixes: Prefix[];
+  prefixes: any[];
   setPrefixes(path: string): void;
   loading: boolean;
   error: Error | undefined;
 }
 
 function useScannedPrefixes(initialPath?: string): ScannedPrefixes {
-  const [prefixes, setPrefixes] = useState<Prefix[]>([]);
+  const [prefixes, setPrefixes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | undefined>(undefined);
 
   function set(path: string) {
-    Prefix.allFromDir(path)
+    window.ipc
+      .invoke(IPC.ScanPrefixes, path)
       .then((pfxs) => {
         setPrefixes(pfxs);
         setError(undefined);

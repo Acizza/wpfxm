@@ -69,9 +69,4 @@ input {
     background-color: $focus-primary;
     border-color: $focus-secondary;
   }
-
-  &.error {
-    border-color: $error-secondary !important;
-    outline: none;
-  }
 }

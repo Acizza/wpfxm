@@ -23,6 +23,11 @@
     input {
       font-size: 0.75em;
       margin-bottom: 2em;
+
+      &:global(.error) {
+        border-color: $error-secondary !important;
+        outline: none;
+      }
     }
   }
 }

@@ -1,19 +1,19 @@
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState } from "react";
-import Prefix from "../../../main/prefix/prefix";
+import { IPrefix } from "../../../shared/ipc/prefix";
 import styles from "./PrefixList.module.scss";
 
 interface PrefixListProps {
-  prefixes: Prefix[];
+  prefixes: IPrefix[];
   loading: boolean;
-  onPrefixSelected?: (pfx: Prefix, selected: boolean) => void;
+  onPrefixSelected?: (pfx: IPrefix, selected: boolean) => void;
 }
 
 function PrefixList(props: PrefixListProps): JSX.Element {
   const [selected, setSelected] = useSelection();
 
-  function prefixClicked(pfx: Prefix, index: number) {
+  function prefixClicked(pfx: IPrefix, index: number) {
     const isSelected: boolean = setSelected(index);
     props.onPrefixSelected?.(pfx, isSelected);
   }
@@ -50,7 +50,7 @@ function useSelection(initial?: number): [number | undefined, SetSelected] {
 }
 
 interface PrefixEntryProps {
-  prefix: Prefix;
+  prefix: IPrefix;
   selected: boolean;
   onClick?: (event: React.MouseEvent) => void;
 }

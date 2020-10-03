@@ -721,7 +721,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/plugin-syntax-typescript@npm:^7.10.4":
+"@babel/plugin-syntax-typescript@npm:^7.10.4, @babel/plugin-syntax-typescript@npm:^7.3.3":
   version: 7.10.4
   resolution: "@babel/plugin-syntax-typescript@npm:7.10.4"
   dependencies:
@@ -2027,6 +2027,18 @@ __metadata:
   dependencies:
     follow-redirects: 1.5.10
   checksum: bad346deea24050f9953ce09bb8015f85a99a7b8f016806adccfab0b8981827d1fbee9c77c0ef7c70cc48392c1af6bbc65e07c3e88221d17282d2d5fd0a191f6
+  languageName: node
+  linkType: hard
+
+"babel-plugin-const-enum@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "babel-plugin-const-enum@npm:1.0.1"
+  dependencies:
+    "@babel/helper-plugin-utils": ^7.0.0
+    "@babel/plugin-syntax-typescript": ^7.3.3
+  peerDependencies:
+    "@babel/core": ^7.0.0-0
+  checksum: d054ef714ab6df3c856941daf7f8f23b70a794a70ec33d6259ef46a92f4067eabfe744280503f4e497341c6dc12fe9412f39073ec9368c754b4c974f775757da
   languageName: node
   linkType: hard
 
@@ -7205,6 +7217,7 @@ typescript@~4.0.3:
   resolution: "wpfxm@workspace:."
   dependencies:
     "@babel/core": ^7.11.6
+    "@babel/generator": ^7.11.6
     "@babel/plugin-proposal-class-properties": ^7.10.4
     "@babel/plugin-transform-react-jsx": ^7.10.4
     "@babel/preset-env": ^7.11.5
@@ -7222,6 +7235,7 @@ typescript@~4.0.3:
     "@types/react": ^16.9.49
     "@types/react-dom": ^16.9.8
     "@yarnpkg/pnpify": ^2.2.1
+    babel-plugin-const-enum: ^1.0.1
     builtin-modules: ^3.1.0
     concurrently: ^5.3.0
     electron: ^10.1.1

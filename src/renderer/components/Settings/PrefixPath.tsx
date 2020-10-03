@@ -1,26 +1,24 @@
-import React, { ChangeEvent, useContext, useState } from "react";
+import React, { useContext, useState } from "react";
 import styles from "./PrefixPath.module.scss";
-import * as fs from "fs";
-import { normalizeUnixPath } from "../../../main/util";
 import { ConfigContext } from "../../config";
+import { IPCSync } from "../../../shared/ipc/event";
 
 function PrefixPath(): JSX.Element {
   const configCxt = useContext(ConfigContext);
-  const [value, setValue] = useState(configCxt?.config.prefixPath || "");
-  const [error, setError] = useState<string | undefined>(undefined);
-
-  function changed(event: ChangeEvent<HTMLInputElement>) {
-    const newValue = event.target.value;
-    const path = normalizeUnixPath(newValue);
-    const newError = fs.existsSync(path) ? undefined : "Path does not exist";
-
-    setValue(newValue);
-    setError(newError);
-  }
+  const { path, setPath, error } = useValidatedPath(
+    configCxt?.config.prefixPath || ""
+  );
 
   function unfocused(event: React.FocusEvent<HTMLInputElement>) {
-    if (error || event.target.value.length === 0) return;
-    configCxt?.setValue("prefixPath", event.target.value);
+    const value = event.target.value;
+
+    if (value.length === 0) return;
+
+    setPath(value);
+
+    if (error) return;
+
+    configCxt?.setValue("prefixPath", value);
   }
 
   const classes = styles.input + (error ? " error" : "");
@@ -33,12 +31,39 @@ function PrefixPath(): JSX.Element {
         className={classes}
         title={error}
         type="text"
-        value={value}
-        onChange={changed}
+        value={path}
+        onChange={(ev) => setPath(ev.target.value)}
         onBlur={unfocused}
       />
     </React.Fragment>
   );
+}
+
+interface ValidatedPath {
+  path: string;
+  setPath(path: string): void;
+  error: string | undefined;
+}
+
+function useValidatedPath(initial: string): ValidatedPath {
+  const [path, setPath] = useState(initial);
+  const [error, setError] = useState<string | undefined>(undefined);
+
+  function set(path: string) {
+    const qualified = window.ipc.sendSync(IPCSync.NormalizePath, path);
+    const newError = window.ipc.sendSync(IPCSync.FileExists, qualified)
+      ? undefined
+      : "Path does not exist";
+
+    setPath(path);
+    setError(newError);
+  }
+
+  return {
+    path,
+    setPath: set,
+    error,
+  };
 }
 
 export default PrefixPath;
