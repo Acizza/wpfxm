@@ -17,10 +17,6 @@ ipcMain.on(IPCSync.NormalizePath, (event, path: string) => {
   event.returnValue = normalizeUnixPath(path);
 });
 
-function fileExists(path: string): boolean {
-  return fs.existsSync(path);
-}
-
 ipcMain.on(IPCSync.FileExists, (event, path: string) => {
-  event.returnValue = fileExists(path);
+  event.returnValue = fs.existsSync(path);
 });
