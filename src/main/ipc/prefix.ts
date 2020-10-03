@@ -29,8 +29,15 @@ export async function allFromDir(dir: string): Promise<IPrefix[]> {
   return results;
 }
 
-function isValidPrefix(_: string): boolean {
-  // TODO
+function isValidPrefix(pfxPath: string): boolean {
+  const systemRegPath = path.join(pfxPath, "system.reg");
+
+  if (!fs.existsSync(systemRegPath)) return false;
+
+  const cDrivePath = path.join(pfxPath, "drive_c");
+
+  if (!fs.statSync(cDrivePath).isDirectory()) return false;
+
   return true;
 }
 
