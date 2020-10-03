@@ -10,36 +10,41 @@ $selected-border-primary: #1d6b3e;
 }
 
 .panel {
-  & {
-    @include scrollbar;
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    font-size: 1.25em;
-    line-height: 2em;
-    overflow: hidden auto;
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
-  }
+  @include scrollbar;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  font-size: 1.25em;
+  overflow: hidden auto;
 
-  .loadIcon {
-    @include size(2em);
-    margin: auto;
+  .loadingWrapper {
+    display: flex;
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+
+    .loadIcon {
+      @include size(2em);
+    }
   }
+}
+
+.prefixList {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  line-height: 2em;
 
   .prefix {
-    & {
-      @include panel-padding;
-      // If we don't include an initial border, there is a white gap
-      // that appears during the transition
-      @include border(left, 0, $highlight-border-primary);
+    @include panel-padding;
+    // If we don't include an initial border, there is a white gap
+    // that appears during the transition
+    @include border(left, 0, $highlight-border-primary);
 
-      white-space: nowrap;
-      cursor: pointer;
-      transition: background-color $highlight-duration ease-in-out,
-        border-left $highlight-duration linear;
-    }
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color $highlight-duration ease-in-out,
+      border-left $highlight-duration linear;
 
     &:hover:not(.prefixSelected) {
       @include selectedPrefix($highlight-border-primary);

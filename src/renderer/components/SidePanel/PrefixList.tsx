@@ -11,6 +11,11 @@ interface PrefixListProps {
 }
 
 function PrefixList(props: PrefixListProps): JSX.Element {
+  const content = PrefixListContent(props);
+  return <div className={styles.panel}>{content}</div>;
+}
+
+function PrefixListContent(props: PrefixListProps): JSX.Element {
   const [selected, setSelected] = useSelection();
 
   function prefixClicked(pfx: IPrefix, index: number) {
@@ -20,20 +25,28 @@ function PrefixList(props: PrefixListProps): JSX.Element {
 
   const displayLoading = props.loading || props.prefixes.length === 0;
 
-  const content = displayLoading ? (
-    <FontAwesomeIcon className={styles.loadIcon} icon={faCircleNotch} spin />
-  ) : (
-    props.prefixes.map((pfx, i) => (
-      <PrefixEntry
-        key={i}
-        prefix={pfx}
-        selected={i === selected}
-        onClick={() => prefixClicked(pfx, i)}
-      />
-    ))
-  );
+  if (displayLoading) {
+    return (
+      <div className={styles.loadingWrapper}>
+        <FontAwesomeIcon
+          className={styles.loadIcon}
+          icon={faCircleNotch}
+          spin
+        />
+      </div>
+    );
+  }
 
-  return <ul className={styles.panel}>{content}</ul>;
+  const pfxs = props.prefixes.map((pfx, i) => (
+    <PrefixEntry
+      key={i}
+      prefix={pfx}
+      selected={i === selected}
+      onClick={() => prefixClicked(pfx, i)}
+    />
+  ));
+
+  return <ul className={styles.prefixList}>{pfxs}</ul>;
 }
 
 type SetSelected = (value?: number) => boolean;
