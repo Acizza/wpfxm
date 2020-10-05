@@ -1,14 +1,5 @@
 @import "base";
 
-$highlight-border-primary: #1d556b;
-$highlight-duration: 250ms;
-$selected-border-primary: #1d6b3e;
-
-@mixin selectedPrefix($border-primary) {
-  @include border(left, 0.12em, $border-primary);
-  background-color: $hover-color;
-}
-
 .panel {
   @include scrollbar;
   display: flex;
@@ -26,32 +17,5 @@ $selected-border-primary: #1d6b3e;
     .loadIcon {
       @include size(2em);
     }
-  }
-}
-
-.prefixList {
-  list-style-type: none;
-  padding: 0;
-  margin: 0;
-  line-height: 2em;
-
-  .prefix {
-    @include panel-padding;
-    // If we don't include an initial border, there is a white gap
-    // that appears during the transition
-    @include border(left, 0, $highlight-border-primary);
-
-    white-space: nowrap;
-    cursor: pointer;
-    transition: background-color $highlight-duration ease-in-out,
-      border-left $highlight-duration linear;
-
-    &:hover:not(.prefixSelected) {
-      @include selectedPrefix($highlight-border-primary);
-    }
-  }
-
-  .prefixSelected {
-    @include selectedPrefix($selected-border-primary);
   }
 }

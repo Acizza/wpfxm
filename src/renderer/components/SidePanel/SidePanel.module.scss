@@ -1,7 +1,9 @@
 @import "base";
+@import "GenericList/default";
 
 .sidePanel {
   @include border(right, 0.1em);
+  @include genericList();
   display: flex;
   flex-direction: column;
   flex: 1 0 10em;
