@@ -2,10 +2,12 @@ import React, { useEffect, useState } from "react";
 import "./App.scss";
 import MainPanel from "./MainPanel/MainPanel";
 import SidePanel from "./SidePanel/SidePanel";
-import ErrorModal, { Error } from "./ErrorModal";
+import ErrorModal from "./ErrorModal";
 import Settings from "./Settings/Settings";
 import { ConfigContext, useGlobalConfig } from "../config";
 import { IPC } from "../../shared/ipc/event";
+import { IPrefix } from "../../shared/ipc/prefix";
+import { DisplayError, ErrorClosure } from "../types/error";
 
 const enum Panel {
   Settings,
@@ -26,14 +28,34 @@ const errors = {
 
 function App() {
   const cfgState = useGlobalConfig();
-  const scannedPfxs = useScannedPrefixes(cfgState.config.prefixPath);
+  const [error, setError] = useState<DisplayError | undefined>(undefined);
   const [panel, togglePanel, resetPanel] = usePanelToggle(Panel.MainPanel);
+  const [selPrefix, setSelPrefix] = useState<IPrefix | undefined>(undefined);
+  const scannedPfxs = useScannedPrefixes({
+    initialPath: cfgState.config.prefixPath,
+    onError,
+  });
+
+  function onError(error: DisplayError | undefined) {
+    setError(error);
+  }
+
+  function onPrefixSelected(pfx: IPrefix, selected: boolean) {
+    if (selected) {
+      resetPanel();
+      setSelPrefix(pfx);
+    } else {
+      setSelPrefix(undefined);
+    }
+  }
 
   let renderedPanel: JSX.Element;
 
   switch (panel as Panel) {
     case Panel.MainPanel:
-      renderedPanel = <MainPanel />;
+      renderedPanel = (
+        <MainPanel selectedPrefix={selPrefix} onError={onError} />
+      );
       break;
     case Panel.Settings:
       renderedPanel = <Settings />;
@@ -47,10 +69,10 @@ function App() {
           prefixes={scannedPfxs.prefixes}
           loading={scannedPfxs.loading}
           onToggleSettings={togglePanel}
-          onPrefixSelected={(_, selected) => selected && resetPanel()}
+          onPrefixSelected={onPrefixSelected}
         />
         {renderedPanel}
-        {scannedPfxs.error && <ErrorModal {...scannedPfxs.error} />}
+        {error && <ErrorModal {...error} />}
       </ConfigContext.Provider>
     </main>
   );
@@ -84,13 +106,16 @@ interface ScannedPrefixes {
   prefixes: any[];
   setPrefixes(path: string): void;
   loading: boolean;
-  error: Error | undefined;
 }
 
-function useScannedPrefixes(initialPath?: string): ScannedPrefixes {
+interface ScannedPrefixesProps {
+  initialPath?: string;
+  onError: ErrorClosure;
+}
+
+function useScannedPrefixes(props: ScannedPrefixesProps): ScannedPrefixes {
   const [prefixes, setPrefixes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | undefined>(undefined);
 
   function set(path: string) {
     window.ipc
@@ -100,21 +125,20 @@ function useScannedPrefixes(initialPath?: string): ScannedPrefixes {
 
         const err = pfxs.length === 0 ? errors.noPrefixes : undefined;
 
-        setError(err);
+        props.onError(err);
       })
-      .catch((err) => setError(errors.prefixLoading(err.message)))
+      .catch((err: Error) => props.onError(errors.prefixLoading(err.message)))
       .finally(() => setLoading(false));
   }
 
   useEffect(() => {
-    if (initialPath) set(initialPath);
-  }, [initialPath]);
+    if (props.initialPath) set(props.initialPath);
+  }, [props.initialPath]);
 
   return {
     prefixes,
     setPrefixes: set,
     loading,
-    error,
   };
 }
 

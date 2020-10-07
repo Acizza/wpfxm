@@ -1,7 +1,7 @@
 import { app, BrowserWindow } from "electron";
 import * as path from "path";
 import { config } from "../../package.json";
-import "./ipc/prefix";
+import "./ipc/prefix/prefix";
 
 function createWindow(): void {
   const win = new BrowserWindow({

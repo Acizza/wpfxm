@@ -1,19 +1,19 @@
 import { ipcMain } from "electron";
 import * as fs from "fs";
 import * as path from "path";
-import { IPC } from "../../shared/ipc/event";
-import { IPrefix } from "../../shared/ipc/prefix";
-import { normalizeUnixPath } from "../util";
+import { IPC } from "../../../shared/ipc/event";
+import { IPrefix } from "../../../shared/ipc/prefix";
+import { NormalizedPath } from "../../util";
+import "./application";
 
-export async function allFromDir(dir: string): Promise<IPrefix[]> {
+async function allFromDir(dir: NormalizedPath): Promise<IPrefix[]> {
   if (!dir.length) return [];
 
-  const absPath = normalizeUnixPath(dir);
-  const files = await fs.promises.readdir(absPath);
+  const files = await fs.promises.readdir(dir.path);
   const results = [];
 
   for (const file of files) {
-    const pfxPath = path.join(absPath, file);
+    const pfxPath = path.join(dir.path, file);
     const type = await fs.promises.stat(pfxPath);
 
     if (!type.isDirectory() || !isValidPrefix(pfxPath)) continue;
@@ -41,6 +41,8 @@ function isValidPrefix(pfxPath: string): boolean {
   return true;
 }
 
-ipcMain.handle(IPC.ScanPrefixes, (_, path: string) => allFromDir(path));
+ipcMain.handle(IPC.ScanPrefixes, (_, path: string) =>
+  allFromDir(new NormalizedPath(path))
+);
 
 export default {};

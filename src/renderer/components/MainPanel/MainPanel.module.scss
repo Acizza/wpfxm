@@ -1,6 +1,28 @@
 @import "base";
+@import "GenericList/default";
+
+$list-hover-color: $hover-secondary;
 
 .panel {
   @include primary-panel;
+  @include scrollbar();
+  @include genericList();
   display: flex;
+  flex: 1 0 max-content;
+  padding: 0;
+  overflow: auto auto;
+
+  :global {
+    .generic-list {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1;
+    }
+
+    .generic-list .list-item {
+      justify-content: center;
+      max-height: 5em;
+      font-size: 1em;
+    }
+  }
 }

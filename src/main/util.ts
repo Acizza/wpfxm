@@ -13,6 +13,26 @@ export function normalizeUnixPath(value: string): string {
   return path.normalize(slice);
 }
 
+export class NormalizedPath {
+  #path: string;
+
+  constructor(path: string) {
+    this.#path = normalizeUnixPath(path);
+  }
+
+  get path(): string {
+    return this.#path;
+  }
+
+  set path(value: string) {
+    this.#path = normalizeUnixPath(value);
+  }
+
+  get length(): number {
+    return this.path.length;
+  }
+}
+
 ipcMain.on(IPCSync.NormalizePath, (event, path: string) => {
   event.returnValue = normalizeUnixPath(path);
 });

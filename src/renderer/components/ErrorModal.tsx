@@ -1,14 +1,10 @@
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState } from "react";
+import { DisplayError } from "../types/error";
 import styles from "./ErrorModal.module.scss";
 
-export interface Error {
-  context: string;
-  message: string;
-}
-
-function ErrorModal(props: Error): JSX.Element | null {
+function ErrorModal(error: DisplayError): JSX.Element | null {
   const [open, setOpen] = useState(true);
 
   if (!open) return null;
@@ -16,14 +12,14 @@ function ErrorModal(props: Error): JSX.Element | null {
   return (
     <div className={styles.errorModal}>
       <div className={styles.header}>
-        <span className={styles.context}>{props.context}</span>
+        <span className={styles.context}>{error.context}</span>
         <FontAwesomeIcon
           className={styles.closeIcon}
           icon={faTimes}
           onClick={() => setOpen((prev) => !prev)}
         />
       </div>
-      <span className={styles.message}>{props.message}</span>
+      <span className={styles.message}>{error.message}</span>
     </div>
   );
 }
