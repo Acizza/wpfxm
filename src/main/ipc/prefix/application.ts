@@ -4,11 +4,14 @@ import * as fs from "fs";
 import * as path from "path";
 import { ipcMain } from "electron";
 import { IPC } from "../../../shared/ipc/event";
-import IFoundApplications from "../../../shared/ipc/application";
+import {
+  FoundApplications,
+  ApplicationPath,
+} from "../../../shared/ipc/application";
 
 const applicationExt = ".exe";
 
-async function scanApplications(prefix: IPrefix): Promise<IFoundApplications> {
+async function scanApplications(prefix: IPrefix): Promise<FoundApplications> {
   const pfxDir = new NormalizedPath(prefix.path);
   let { execs, dirs } = await filesWithExtension(pfxDir.path, applicationExt);
 
@@ -22,16 +25,17 @@ async function scanApplications(prefix: IPrefix): Promise<IFoundApplications> {
 
   const commonPathPrefix = findCommonPathPrefix(execs);
 
-  const strippedPaths = execs.map((exec) => {
-    // Include the path separator so our path doesn't start with /
+  const paths: ApplicationPath[] = execs.map((exec) => {
+    // Our stripped path should nclude the path separator so it doesn't start with /
     const start = commonPathPrefix.length + 1;
     const end = exec.length - applicationExt.length;
-    return exec.slice(start, end);
+    const stripped = exec.slice(start, end);
+
+    return { absolute: exec, stripped };
   });
 
   return {
-    paths: execs,
-    strippedPaths,
+    paths,
     commonPathPrefix,
   };
 }

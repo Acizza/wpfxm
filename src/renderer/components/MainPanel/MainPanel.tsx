@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
-import IFoundApplications from "../../../shared/ipc/application";
+import {
+  ApplicationPath,
+  FoundApplications,
+} from "../../../shared/ipc/application";
 import { IPC } from "../../../shared/ipc/event";
 import { IPrefix } from "../../../shared/ipc/prefix";
 import { ErrorClosure } from "../../types/error";
@@ -19,7 +22,7 @@ interface MainPanelProps {
 }
 
 function MainPanel(props: MainPanelProps): JSX.Element {
-  const [apps, setApps] = useState<string[]>([]);
+  const [apps, setApps] = useState<ApplicationPath[]>([]);
 
   useEffect(() => {
     if (!props.selectedPrefix) {
@@ -29,8 +32,8 @@ function MainPanel(props: MainPanelProps): JSX.Element {
 
     window.ipc
       .invoke(IPC.ScanPrefixApps, props.selectedPrefix)
-      .then((newApps: IFoundApplications) => {
-        setApps(newApps.strippedPaths);
+      .then((newApps: FoundApplications) => {
+        setApps(newApps.paths);
         props.onError?.(undefined);
       })
       .catch((err: Error) => {
@@ -40,7 +43,7 @@ function MainPanel(props: MainPanelProps): JSX.Element {
 
   return (
     <div className={styles.panel}>
-      <GenericList items={apps} />
+      <GenericList items={apps} display={(p) => p.stripped} />
     </div>
   );
 }

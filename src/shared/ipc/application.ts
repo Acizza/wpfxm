@@ -1,5 +1,11 @@
-export default interface IFoundApplications {
-  paths: string[];
-  strippedPaths: string[];
+export interface FoundApplications {
+  paths: ApplicationPath[];
   commonPathPrefix: string;
 }
+
+export interface ApplicationPath {
+  absolute: string;
+  stripped: string;
+}
+
+export default {};
