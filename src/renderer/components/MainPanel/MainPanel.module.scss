@@ -4,19 +4,28 @@
 $list-hover-color: $hover-secondary;
 
 .panel {
-  @include primary-panel;
-  @include scrollbar();
+  @include primary-panel-flex;
   @include genericList();
+
   display: flex;
+  flex-direction: column;
   flex: 1 0 max-content;
-  padding: 0;
-  overflow: auto auto;
+  overflow: hidden;
+}
+
+.appList {
+  @include scrollbar();
+
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: auto;
 
   :global {
     .generic-list {
       display: flex;
       flex-direction: column;
-      flex: 1 1;
+      flex: 1;
     }
 
     .generic-list .list-item {
@@ -24,5 +33,25 @@ $list-hover-color: $hover-secondary;
       max-height: 5em;
       font-size: 1em;
     }
+  }
+}
+
+.message,
+.loading {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  cursor: default;
+  user-select: none;
+}
+
+.message {
+  font-size: 1.5em;
+}
+
+.loading {
+  .loadingIcon {
+    @include size(3em);
   }
 }

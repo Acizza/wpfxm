@@ -1,0 +1,15 @@
+@import "base";
+
+.panel {
+  @include border(top, 0.2em);
+
+  display: flex;
+  flex-direction: column;
+  flex-basis: 20vh;
+  transition: flex 500ms ease-in-out;
+  overflow: hidden;
+}
+
+.hidden {
+  flex: 0;
+}

@@ -20,8 +20,7 @@ $error-secondary: #991b1be0;
 $focus-primary: #35323a;
 $focus-secondary: #45434d;
 
-@mixin primary-panel {
-  @include panel-padding;
+@mixin primary-panel-flex {
   flex: 1 1 60%;
 }
 

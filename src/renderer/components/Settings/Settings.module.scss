@@ -1,18 +1,16 @@
 @import "base";
 
 .panel {
-  & {
-    @include primary-panel;
-    display: flex;
-    flex-direction: column;
-    padding: 1em 1em;
-  }
+  @include primary-panel-flex;
+  display: flex;
+  flex-direction: column;
 
   .form {
     display: flex;
     flex-direction: column;
     align-items: center;
     font-size: 1.5em;
+    padding: 1em;
 
     label {
       padding-bottom: 0.5em;
