@@ -44,4 +44,5 @@
   @include scrollbar($error-primary, $error-secondary);
   overflow: hidden auto;
   padding: 0.5em;
+  word-break: break-all;
 }
