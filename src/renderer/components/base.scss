@@ -48,6 +48,10 @@ $focus-secondary: #45434d;
   &::-webkit-scrollbar-thumb {
     background-color: $thumb-color;
   }
+
+  &::-webkit-scrollbar-corner {
+    background-color: $track-color;
+  }
 }
 
 body {
