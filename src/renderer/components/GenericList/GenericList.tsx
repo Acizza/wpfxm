@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { CSSProperties, useMemo, useRef, useState } from "react";
 
 interface GenericListProps<T> {
   items: T[];
@@ -10,14 +10,14 @@ function GenericList<T>(props: GenericListProps<T>): JSX.Element {
   const [selected, setSelected] = useSelection();
 
   function itemClicked(item: T, index: number) {
-    const isSelected: boolean = setSelected(index);
+    const isSelected = setSelected(index);
     props.onItemSelected?.(item, isSelected);
   }
 
   const items = useMemo(
     () =>
       props.items.map((item, i) => (
-        <ItemEntry
+        <ScrollingItemEntry
           key={i}
           item={item}
           selected={i === selected}
@@ -53,16 +53,44 @@ interface ItemEntryProps<T> {
   onClick?(event: React.MouseEvent): void;
 }
 
-function ItemEntry<T>(props: ItemEntryProps<T>): JSX.Element {
-  const display = props.display || ((item) => item);
+function ScrollingItemEntry<T>(props: ItemEntryProps<T>): JSX.Element {
+  const [style, setStyle] = useState<CSSProperties | undefined>(undefined);
+  const textRef = useRef<HTMLSpanElement>(null);
 
+  const display = props.display || ((item) => item);
   let classes = "generic-list list-item";
 
   if (props.selected) classes += " item-selected";
 
+  function onMouseOver() {
+    const elem = textRef.current;
+
+    if (!elem) return;
+
+    const overflow = elem.scrollWidth - elem.offsetWidth;
+
+    if (overflow < 1) return;
+
+    setStyle({
+      transform: `translateX(-${overflow}px)`,
+      transitionDuration: `${Math.max(overflow * 10, 500)}ms`,
+    });
+  }
+
+  function onMouseLeave() {
+    setStyle(undefined);
+  }
+
   return (
-    <li className={classes} onClick={props.onClick}>
-      {display(props.item)}
+    <li
+      className={classes}
+      onClick={props.onClick}
+      onMouseOver={onMouseOver}
+      onMouseLeave={onMouseLeave}
+    >
+      <span className="text" ref={textRef} style={style}>
+        {display(props.item)}
+      </span>
     </li>
   );
 }

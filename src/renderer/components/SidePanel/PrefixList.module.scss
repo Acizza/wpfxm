@@ -1,7 +1,9 @@
 @import "base";
+@import "GenericList/default";
 
 .panel {
   @include scrollbar;
+  @include genericList();
   display: flex;
   flex-direction: column;
   flex: 1;

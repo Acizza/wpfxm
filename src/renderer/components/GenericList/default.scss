@@ -4,7 +4,7 @@ $list-highlight-border-primary: #1d556b;
 $list-highlight-duration: 250ms;
 $list-selected-border-primary: #1d6b3e;
 $list-hover-color: $hover-primary;
-$list-line-height: 2em;
+$list-item-padding: 0.6em 1em;
 $list-border-side: left;
 
 @mixin selectedItem($border-primary) {
@@ -15,24 +15,39 @@ $list-border-side: left;
 @mixin genericList() {
   :global {
     .generic-list {
+      display: flex;
+      flex-direction: column;
       list-style-type: none;
       padding: 0;
       margin: 0;
-      line-height: $list-line-height;
 
       .list-item {
-        @include panel-padding;
         // If we don't include an initial border, there is a white gap
         // that appears during the transition
         @include border(left, 0, $list-highlight-border-primary);
 
+        padding: $list-item-padding;
         white-space: nowrap;
+        justify-content: center;
         cursor: pointer;
+        overflow: hidden;
         transition: background-color $list-highlight-duration ease-in-out,
           border-#{$list-border-side} $list-highlight-duration linear;
 
         &:hover:not(.item-selected) {
           @include selectedItem($list-highlight-border-primary);
+        }
+
+        .text {
+          display: inline-block;
+          transition-property: transform;
+          transition-timing-function: ease-in-out;
+          transition-duration: 500ms;
+
+          &:hover {
+            transition-timing-function: ease-out;
+            transition-delay: 1000ms;
+          }
         }
       }
 
