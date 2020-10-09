@@ -5,10 +5,11 @@ $list-highlight-duration: 250ms;
 $list-selected-border-primary: #1d6b3e;
 $list-hover-color: $hover-primary;
 $list-item-padding: 0.6em 1em;
+$list-border-size: 0.12em;
 $list-border-side: left;
 
 @mixin selectedItem($border-primary) {
-  @include border($list-border-side, 0.12em, $border-primary);
+  border-color: $border-primary;
   background-color: $list-hover-color;
 }
 
@@ -22,17 +23,20 @@ $list-border-side: left;
       margin: 0;
 
       .list-item {
-        // If we don't include an initial border, there is a white gap
-        // that appears during the transition
-        @include border(left, 0, $list-highlight-border-primary);
+        @include border(
+          left,
+          $list-border-size,
+          $list-highlight-border-primary
+        );
+        border-color: transparent;
+        transition: background-color $list-highlight-duration ease-in-out,
+          border-color $list-highlight-duration ease-in-out;
 
         padding: $list-item-padding;
         white-space: nowrap;
         justify-content: center;
         cursor: pointer;
         overflow: hidden;
-        transition: background-color $list-highlight-duration ease-in-out,
-          border-#{$list-border-side} $list-highlight-duration linear;
 
         &:hover:not(.item-selected) {
           @include selectedItem($list-highlight-border-primary);
