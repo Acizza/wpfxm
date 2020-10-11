@@ -1,4 +1,4 @@
-import React, { CSSProperties, useEffect, useRef, useState } from "react";
+import React, { useMemo, useRef } from "react";
 import { ApplicationPath } from "../../../../shared/ipc/application";
 import styles from "./AppLauncher.module.scss";
 import Header from "./Header";
@@ -10,25 +10,25 @@ interface AppLauncherProps {
 const maxHeightPcnt = 40;
 
 function AppLauncher(props: AppLauncherProps): JSX.Element {
-  const [style, setStyle] = useState<CSSProperties>({ height: 0 });
   const panelRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  const style = useMemo(() => {
     const elem = panelRef.current;
+    let height: string | number = 0;
 
-    if (!elem || !elem.parentElement) return;
+    if (!elem || !elem.parentElement) return { height };
 
-    let height: string | number;
+    const parentHeight = elem.parentElement.scrollHeight;
 
-    if (props.app) {
-      const pcnt = (elem.scrollHeight / elem.parentElement.scrollHeight) * 100;
+    if (props.app && parentHeight > 0) {
+      const pcnt = (elem.scrollHeight / parentHeight) * 100;
       const value = Math.min(pcnt, maxHeightPcnt);
       height = `${Math.round(value)}%`;
     } else {
       height = 0;
     }
 
-    setStyle({ height });
+    return { height };
   }, [props.app]);
 
   return (
