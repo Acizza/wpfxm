@@ -1,0 +1,11 @@
+@import "base";
+
+.panel {
+  display: flex;
+  padding: 0.75em 1em;
+
+  button {
+    font-size: 1.15em;
+    margin-right: 1em;
+  }
+}

@@ -1,13 +1,13 @@
 @import "base";
 
 .panel {
-  @include border(top, 0.2em);
+  @include border(top, 0.15em);
 
   display: flex;
   flex-direction: column;
-  flex-basis: 20vh;
-  transition: flex 500ms ease-in-out;
+  transition: height 500ms ease-in-out;
   overflow: hidden;
+  background-color: $bg-secondary;
 }
 
 .hidden {

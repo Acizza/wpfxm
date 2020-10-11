@@ -9,7 +9,7 @@ import { IPC } from "../../../shared/ipc/event";
 import { IPrefix } from "../../../shared/ipc/prefix";
 import { ErrorClosure } from "../../types/error";
 import GenericList from "../GenericList/GenericList";
-import AppLauncher from "./AppLauncher";
+import AppLauncher from "./AppLauncher/AppLauncher";
 import styles from "./MainPanel.module.scss";
 
 const errors = {

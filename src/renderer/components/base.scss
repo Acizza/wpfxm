@@ -74,3 +74,20 @@ input {
     border-color: $focus-secondary;
   }
 }
+
+button {
+  $anim-duration: 250ms;
+
+  border: 0.1em solid $border-primary;
+  background-color: $bg-secondary;
+  color: $text-secondary;
+  outline: none;
+  box-shadow: none;
+  transition: background-color $anim-duration ease-in-out,
+    color $anim-duration ease-in-out;
+
+  &:hover {
+    background-color: $focus-primary;
+    color: $text-primary;
+  }
+}
