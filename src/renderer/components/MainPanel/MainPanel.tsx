@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   ApplicationPath,
   FoundApplications,
+  SelectedApp,
 } from "../../../shared/ipc/application";
 import { IPC } from "../../../shared/ipc/event";
 import { IPrefix } from "../../../shared/ipc/prefix";
@@ -77,10 +78,20 @@ interface AppSelectorProps {
 }
 
 function AppSelector(props: AppSelectorProps): JSX.Element {
-  const [selApp, setSelApp] = useState<ApplicationPath | undefined>(undefined);
+  const [selApp, setSelApp] = useState<SelectedApp | undefined>(undefined);
 
   function onAppSelected(item: ApplicationPath, selected: boolean) {
-    setSelApp(selected ? item : undefined);
+    if (!selected) {
+      setSelApp(undefined);
+      return;
+    }
+
+    const sel = {
+      prefix: props.selectedPrefix,
+      path: item,
+    };
+
+    setSelApp(sel);
   }
 
   useEffect(() => {

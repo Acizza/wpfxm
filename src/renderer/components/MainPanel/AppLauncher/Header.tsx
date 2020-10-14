@@ -1,10 +1,14 @@
 import React from "react";
 import styles from "./Header.module.scss";
 
-function Header(): JSX.Element {
+interface HeaderProps {
+  onLaunchClicked?(): void;
+}
+
+function Header(props: HeaderProps): JSX.Element {
   return (
     <div className={styles.panel}>
-      <button>Launch</button>
+      <button onClick={props.onLaunchClicked}>Launch</button>
       <button>Edit</button>
     </div>
   );

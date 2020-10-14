@@ -2,12 +2,17 @@ import { IPrefix } from "../../../shared/ipc/prefix";
 import { NormalizedPath } from "../../util";
 import * as fs from "fs";
 import * as path from "path";
-import { ipcMain } from "electron";
+import * as process from "process";
+import * as os from "os";
+import { ipcMain, MessagePortMain } from "electron";
 import { IPC } from "../../../shared/ipc/event";
 import {
   FoundApplications,
   ApplicationPath,
+  LaunchOptions,
+  EventKind,
 } from "../../../shared/ipc/application";
+import { spawn, SpawnOptionsWithoutStdio } from "child_process";
 
 const applicationExt = ".exe";
 
@@ -111,5 +116,48 @@ function eqIgnoreCase(x: string, y: string): boolean {
 function arrContainsIgnoreCase(arr: string[], value: string): boolean {
   return arr.some((x) => eqIgnoreCase(x, value));
 }
+
+function launch(opts: LaunchOptions, port: MessagePortMain): void {
+  const wineExec = opts.force32Bit ? "wine" : "wine64";
+
+  const spawnOpts: SpawnOptionsWithoutStdio = {
+    env: {
+      WINEPREFIX: opts.prefix.path,
+      WINEARCH: opts.force32Bit ? "win32" : "win64",
+      ...opts.env,
+      ...process.env,
+    },
+    stdio: "pipe",
+    detached: true,
+    windowsHide: true,
+  };
+
+  const pc = spawn(wineExec, [opts.path, ...(opts.args || [])], spawnOpts);
+
+  function onData(data: Buffer | string) {
+    data
+      .toString()
+      .split(os.EOL)
+      .map((line) => ({ kind: "data", data: line } as EventKind))
+      .forEach((msg) => port.postMessage(msg));
+  }
+
+  pc.stdout.on("data", onData);
+  pc.stderr.on("data", onData);
+
+  pc.on("close", (code) => {
+    const reply: EventKind = {
+      kind: "closed",
+      success: code === 0,
+    };
+
+    port.postMessage(reply);
+  });
+}
+
+ipcMain.on(IPC.LaunchProcess, (event, opts: LaunchOptions) => {
+  const [port] = event.ports;
+  launch(opts, port);
+});
 
 export default {};
