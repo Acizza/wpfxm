@@ -1697,10 +1697,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^12.0.12, @types/node@npm:^12.12.62":
+"@types/node@npm:^12.0.12":
   version: 12.12.62
   resolution: "@types/node@npm:12.12.62"
   checksum: 8810ba25c10b0e9f9fe91740854cae2b1e4ed500d6b79c135cf08e8cad67155fe8b4e7abbb8b1f65aaffb3fef58980d7bd2f051aed8d762e015d34b76db89194
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:^12.12.69":
+  version: 12.12.69
+  resolution: "@types/node@npm:12.12.69"
+  checksum: cae9f2997362663899cd1e33180e0ec719004f2ce7d2d7afc972b9829596b0fad24be73727673c7ab72b457a2512adcab78d759b99d1dc1bf2c0edc610626808
   languageName: node
   linkType: hard
 
@@ -1744,13 +1751,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:^16.9.50":
-  version: 16.9.50
-  resolution: "@types/react@npm:16.9.50"
+"@types/react@npm:^16.9.53":
+  version: 16.9.53
+  resolution: "@types/react@npm:16.9.53"
   dependencies:
     "@types/prop-types": "*"
     csstype: ^3.0.2
-  checksum: 3941c4f31cf5a44d376a8ca2b5e5df1ab6af0588da88f8975dc3dac55f3345a7634d599c1a808726723509611b0536943622fbc9162afff2ad869677672b877a
+  checksum: 01c646c8f08306660441a14495e926c0362114da7813c3bc3d4d58b47590ee92274bbbff18f3fafd465a09369daa25982d68ba6628f1080120b62d40ce75ca40
   languageName: node
   linkType: hard
 
@@ -7349,8 +7356,8 @@ typescript@~4.0.3:
     "@rollup/plugin-json": ^4.1.0
     "@rollup/plugin-node-resolve": ^9.0.0
     "@rollup/plugin-replace": ^2.3.3
-    "@types/node": ^12.12.62
-    "@types/react": ^16.9.50
+    "@types/node": ^12.12.69
+    "@types/react": ^16.9.53
     "@types/react-dom": ^16.9.8
     "@yarnpkg/pnpify": ^2.3.1
     babel-plugin-const-enum: ^1.0.1
