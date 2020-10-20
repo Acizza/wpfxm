@@ -1402,28 +1402,28 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fortawesome/fontawesome-common-types@npm:^0.2.31":
-  version: 0.2.31
-  resolution: "@fortawesome/fontawesome-common-types@npm:0.2.31"
-  checksum: fb43ded2b789d4c372cb3d1d5424cfa459d4481dc29365378a9f634261490cd2ade166e7b36de018b9b55304cc76ab27d89bf8f211a59ffc10c22d0387ac9157
+"@fortawesome/fontawesome-common-types@npm:^0.2.32":
+  version: 0.2.32
+  resolution: "@fortawesome/fontawesome-common-types@npm:0.2.32"
+  checksum: a3654c397d9fb62edb7a6070220d18f55ec1fbc16aec14ea0c4c425e626589fcde6534eb61346e145ef07922221514646923695d536d17d754b50dfe3ca66dc6
   languageName: node
   linkType: hard
 
-"@fortawesome/fontawesome-svg-core@npm:^1.2.31":
-  version: 1.2.31
-  resolution: "@fortawesome/fontawesome-svg-core@npm:1.2.31"
+"@fortawesome/fontawesome-svg-core@npm:^1.2.32":
+  version: 1.2.32
+  resolution: "@fortawesome/fontawesome-svg-core@npm:1.2.32"
   dependencies:
-    "@fortawesome/fontawesome-common-types": ^0.2.31
-  checksum: c48b85b0ab171378a1566ee12c3900e1bfec5aa86e0c31f17cdb63d386cc5ab69dceb2837152fceec9046a78c7b466226651790b8a60c186dbb6fc86f0ec8778
+    "@fortawesome/fontawesome-common-types": ^0.2.32
+  checksum: 0fd346935c42fbf37eaf19f2a0b7e5f5f6da0a922d9b44326b3db44602143334885ad0fed29c26ce56f5fd54616023655f8a1f0316c68161fd2779ce94756d4b
   languageName: node
   linkType: hard
 
-"@fortawesome/free-solid-svg-icons@npm:^5.15.0":
-  version: 5.15.0
-  resolution: "@fortawesome/free-solid-svg-icons@npm:5.15.0"
+"@fortawesome/free-solid-svg-icons@npm:^5.15.1":
+  version: 5.15.1
+  resolution: "@fortawesome/free-solid-svg-icons@npm:5.15.1"
   dependencies:
-    "@fortawesome/fontawesome-common-types": ^0.2.31
-  checksum: 9992503b5b5fca9bd45f662bf9d67ce559597d664fccdff8554aba4b270c6e17a68fa783b8485f91c83a000ef8733d4d690eed725d0a240dfad94b30ccc72efa
+    "@fortawesome/fontawesome-common-types": ^0.2.32
+  checksum: ca31ed2dbfcb9fb08c785f41768313ff6dd4570f1eca5cde8c3b2de6656fb58492c3b5474e2d9453d6e90214f6e4621d73bf50cf73c0bfc6b4257caaeea16860
   languageName: node
   linkType: hard
 
@@ -7340,8 +7340,8 @@ typescript@~4.0.3:
     "@babel/plugin-transform-react-jsx": ^7.12.1
     "@babel/preset-env": ^7.12.1
     "@babel/preset-typescript": ^7.12.1
-    "@fortawesome/fontawesome-svg-core": ^1.2.31
-    "@fortawesome/free-solid-svg-icons": ^5.15.0
+    "@fortawesome/fontawesome-svg-core": ^1.2.32
+    "@fortawesome/free-solid-svg-icons": ^5.15.1
     "@fortawesome/react-fontawesome": ^0.1.11
     "@rollup/plugin-alias": ^3.1.1
     "@rollup/plugin-babel": ^5.2.1
