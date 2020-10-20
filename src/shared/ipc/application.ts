@@ -12,13 +12,13 @@ export interface ApplicationPath {
   stripped: string;
 }
 
-export interface SelectedApp {
+export interface Application {
   prefix: IPrefix;
   path: ApplicationPath;
 }
 
 export interface LaunchOptions {
-  app: SelectedApp;
+  app: Application;
   args?: string[];
   env?: { [key: string]: string };
   force32Bit: boolean;

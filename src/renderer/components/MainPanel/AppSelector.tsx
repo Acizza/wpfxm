@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ApplicationPath, SelectedApp } from "../../../shared/ipc/application";
+import { ApplicationPath, Application } from "../../../shared/ipc/application";
 import { IPrefix } from "../../../shared/ipc/prefix";
 import GenericList from "../GenericList/GenericList";
 import AppLauncher from "./AppLauncher/AppLauncher";
@@ -11,7 +11,7 @@ interface AppSelectorProps {
 }
 
 function AppSelector(props: AppSelectorProps): JSX.Element {
-  const [selApp, setSelApp] = useState<SelectedApp | undefined>(undefined);
+  const [selApp, setSelApp] = useState<Application | undefined>(undefined);
 
   function onAppSelected(item: ApplicationPath, selected: boolean) {
     if (!selected) {

@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   AppEvent,
   maxAppEvents,
-  SelectedApp,
+  Application,
 } from "../../../../shared/ipc/application";
 import { IPC, IPCSync } from "../../../../shared/ipc/event";
 import styles from "./OutputLog.module.scss";
@@ -39,7 +39,7 @@ interface OutputEvent {
   message: string;
 }
 
-export function useAppOutput(app?: SelectedApp): OutputEvent[] {
+export function useAppOutput(app?: Application): OutputEvent[] {
   const [lines, setLines] = useState<OutputEvent[]>([]);
 
   // This effect loads existing app events from the main process and starts monitoring for new ones

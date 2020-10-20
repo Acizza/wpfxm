@@ -11,7 +11,7 @@ import {
   ApplicationPath,
   LaunchOptions,
   AppEvent,
-  SelectedApp,
+  Application,
   maxAppEvents,
 } from "../../../shared/ipc/application";
 import { spawn, SpawnOptionsWithoutStdio } from "child_process";

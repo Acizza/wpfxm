@@ -1,12 +1,12 @@
 import React, { CSSProperties, useEffect, useRef, useState } from "react";
-import { LaunchOptions, SelectedApp } from "../../../../shared/ipc/application";
+import { LaunchOptions, Application } from "../../../../shared/ipc/application";
 import { IPC } from "../../../../shared/ipc/event";
 import styles from "./AppLauncher.module.scss";
 import Header from "./Header";
 import OutputLog, { useAppOutput } from "./OutputLog";
 
 interface AppLauncherProps {
-  app?: SelectedApp;
+  app?: Application;
 }
 
 const maxHeightPcnt = 40;
