@@ -13,25 +13,6 @@ $list-hover-color: $hover-secondary;
   overflow: hidden;
 }
 
-.appList {
-  @include scrollbar();
-
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  overflow: hidden auto;
-
-  :global {
-    .generic-list {
-      flex: 1;
-
-      .list-item {
-        max-height: 5em;
-      }
-    }
-  }
-}
-
 .message,
 .loading {
   display: flex;

@@ -4,13 +4,11 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   ApplicationPath,
   FoundApplications,
-  SelectedApp,
 } from "../../../shared/ipc/application";
 import { IPC } from "../../../shared/ipc/event";
 import { IPrefix } from "../../../shared/ipc/prefix";
 import { ErrorClosure } from "../../types/error";
-import GenericList from "../GenericList/GenericList";
-import AppLauncher from "./AppLauncher/AppLauncher";
+import AppSelector from "./AppSelector";
 import styles from "./MainPanel.module.scss";
 
 const errors = {
@@ -70,46 +68,6 @@ function MainPanel(props: MainPanelProps): JSX.Element {
   );
 
   return <div className={styles.panel}>{content}</div>;
-}
-
-interface AppSelectorProps {
-  apps: ApplicationPath[];
-  selectedPrefix: IPrefix;
-}
-
-function AppSelector(props: AppSelectorProps): JSX.Element {
-  const [selApp, setSelApp] = useState<SelectedApp | undefined>(undefined);
-
-  function onAppSelected(item: ApplicationPath, selected: boolean) {
-    if (!selected) {
-      setSelApp(undefined);
-      return;
-    }
-
-    const sel = {
-      prefix: props.selectedPrefix,
-      path: item,
-    };
-
-    setSelApp(sel);
-  }
-
-  useEffect(() => {
-    setSelApp(undefined);
-  }, [props.selectedPrefix]);
-
-  return (
-    <React.Fragment>
-      <div className={styles.appList}>
-        <GenericList
-          items={props.apps}
-          display={(p) => p.stripped}
-          onItemSelected={onAppSelected}
-        />
-      </div>
-      <AppLauncher app={selApp} />
-    </React.Fragment>
-  );
 }
 
 const enum MessageKind {
