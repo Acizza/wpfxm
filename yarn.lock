@@ -5775,10 +5775,10 @@ fsevents@~2.1.2:
   languageName: node
   linkType: hard
 
-"preact@npm:^10.5.3":
-  version: 10.5.3
-  resolution: "preact@npm:10.5.3"
-  checksum: 355a5656155c9befc055369401f96ca594ff2e6bf293cbed5f2a9fcbb4a35923da70bccda021f3cc99657ea8a576dbd43fe963bd498b7a50c12ba7125f1204d3
+"preact@npm:^10.5.5":
+  version: 10.5.5
+  resolution: "preact@npm:10.5.5"
+  checksum: f44c12f61e1ae0dd3691d291559b7bc41a664193650d3156fd02f1541722bf6cb07bf885e8dd31b7023e5683cdc1a42fe5fba4934433f5811b338e24698d1dc1
   languageName: node
   linkType: hard
 
@@ -7365,7 +7365,7 @@ typescript@~4.0.3:
     concurrently: ^5.3.0
     electron: ^10.1.1
     node-sass: ^4.14.1
-    preact: ^10.5.3
+    preact: ^10.5.5
     rollup: ^2.28.2
     rollup-plugin-livereload: ^2.0.0
     rollup-plugin-postcss: ^3.1.8
