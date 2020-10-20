@@ -11,7 +11,7 @@ pkgs.mkShell rec {
       for MODULE in $NODE_MODULES; do
         FILE="$MODULE/node_modules/electron/dist/electron"
 
-        if [ -f "$FILE" ]; then
+        if [ -e "$FILE" ] || [ -L "$FILE" ]; then
           rm "$FILE"
         fi
 
