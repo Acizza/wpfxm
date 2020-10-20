@@ -171,7 +171,7 @@ function launch(opts: LaunchOptions): void {
   pc.on("close", () => {
     const reply: AppEvent = {
       kind: "close",
-      prefix: opts.app.prefix,
+      app: opts.app,
     };
 
     const appOutput = runningApps.get(absPath);
@@ -182,7 +182,7 @@ function launch(opts: LaunchOptions): void {
 
   mainWindow().webContents.send(IPC.AppEvent, absPath, {
     kind: "launch",
-    prefix: opts.app.prefix,
+    app: opts.app
   } as AppEvent);
 }
 

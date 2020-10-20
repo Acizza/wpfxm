@@ -25,8 +25,8 @@ export interface LaunchOptions {
 }
 
 type OutputEvent = { kind: "out"; data: string };
-type LaunchEvent = { kind: "launch"; prefix: IPrefix };
-type ClosedEvent = { kind: "close"; prefix: IPrefix };
+type LaunchEvent = { kind: "launch"; app: Application };
+type ClosedEvent = { kind: "close"; app: Application };
 
 export type AppEvent = OutputEvent | LaunchEvent | ClosedEvent;
 

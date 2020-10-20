@@ -8,6 +8,7 @@ import {
 import { IPC } from "../../../shared/ipc/event";
 import { IPrefix } from "../../../shared/ipc/prefix";
 import { ErrorClosure } from "../../types/error";
+import { RunningApps } from "../App";
 import AppSelector from "./AppSelector";
 import styles from "./MainPanel.module.scss";
 
@@ -20,6 +21,7 @@ const errors = {
 
 interface MainPanelProps {
   selectedPrefix?: IPrefix;
+  runningApps: RunningApps;
   onError?: ErrorClosure;
 }
 
@@ -57,14 +59,18 @@ function MainPanel(props: MainPanelProps): JSX.Element {
         return <Message kind={MessageKind.NoApps} />;
       } else {
         return (
-          <AppSelector apps={apps} selectedPrefix={props.selectedPrefix} />
+          <AppSelector
+            apps={apps}
+            runningApps={props.runningApps}
+            selectedPrefix={props.selectedPrefix}
+          />
         );
       }
     },
     // We don't want to update when our selectedPrefix changes, as it will cause the NoApps message
     // to show for one render once we start loading applications. The effect hook above will set
     // apps and trigger an update when the selected prefix changes.
-    [loading, apps]
+    [loading, apps, props.runningApps.size]
   );
 
   return <div className={styles.panel}>{content}</div>;

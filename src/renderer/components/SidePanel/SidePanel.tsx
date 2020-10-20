@@ -6,6 +6,7 @@ import styles from "./SidePanel.module.scss";
 
 interface SidePanelProps {
   prefixes: IPrefix[];
+  pfxsWithRunningApps: Set<string>;
   loading: boolean;
   onToggleSettings?: () => void;
   onPrefixSelected?: (pfx: IPrefix, selected: boolean) => void;
@@ -17,6 +18,7 @@ function SidePanel(props: SidePanelProps): JSX.Element {
       <Header onToggleSettings={props.onToggleSettings} />
       <PrefixList
         prefixes={props.prefixes}
+        pfxsWithRunningApps={props.pfxsWithRunningApps}
         loading={props.loading}
         onPrefixSelected={props.onPrefixSelected}
       />

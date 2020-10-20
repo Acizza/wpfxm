@@ -8,6 +8,9 @@ import { ConfigContext, useGlobalConfig } from "../config";
 import { IPC } from "../../shared/ipc/event";
 import { IPrefix } from "../../shared/ipc/prefix";
 import { DisplayError, ErrorClosure } from "../types/error";
+import { AppEvent } from "../../shared/ipc/application";
+import { IpcRendererEvent } from "electron";
+import { useForceUpdate } from "../util";
 
 const enum Panel {
   Settings,
@@ -35,6 +38,7 @@ function App() {
     initialPath: cfgState.config.prefixPath,
     onError,
   });
+  const [runningApps, pfxsWithRunningApps] = useRunningApps();
 
   function onError(error: DisplayError | undefined) {
     setError(error);
@@ -54,7 +58,11 @@ function App() {
   switch (panel as Panel) {
     case Panel.MainPanel:
       renderedPanel = (
-        <MainPanel selectedPrefix={selPrefix} onError={onError} />
+        <MainPanel
+          selectedPrefix={selPrefix}
+          runningApps={runningApps}
+          onError={onError}
+        />
       );
       break;
     case Panel.Settings:
@@ -67,6 +75,7 @@ function App() {
       <ConfigContext.Provider value={cfgState}>
         <SidePanel
           prefixes={scannedPfxs.prefixes}
+          pfxsWithRunningApps={pfxsWithRunningApps}
           loading={scannedPfxs.loading}
           onToggleSettings={togglePanel}
           onPrefixSelected={onPrefixSelected}
@@ -140,6 +149,61 @@ function useScannedPrefixes(props: ScannedPrefixesProps): ScannedPrefixes {
     setPrefixes: set,
     loading,
   };
+}
+
+type AbsolutePath = string;
+export type RunningApps = Set<AbsolutePath>;
+type PrefixesWithRunningApps = Set<string>;
+
+/** Hook to capture running applications and the prefixes containing them.
+ *
+ * The prefixes are stored separately from the running application list to make data manipulation easier.
+ */
+function useRunningApps(): [RunningApps, PrefixesWithRunningApps] {
+  // Since our state uses objects, we need to force updates whenever we change it
+  const forceUpdate = useForceUpdate();
+  const [runningApps, setRunningApps] = useState<RunningApps>(new Set());
+  const [pfxsWithRunningApps, setPfxsWithRunningApps] = useState<
+    PrefixesWithRunningApps
+  >(new Set());
+
+  useEffect(() => {
+    window.ipc.on(IPC.AppEvent, onAppEvent);
+
+    function onAppEvent(
+      _: IpcRendererEvent,
+      _absPath: string,
+      event: AppEvent
+    ) {
+      switch (event.kind) {
+        case "out":
+          return;
+        case "launch":
+          setRunningApps((cur) => cur.add(event.app.path.absolute));
+          setPfxsWithRunningApps((cur) => cur.add(event.app.prefix.name));
+          forceUpdate();
+          break;
+        case "close":
+          setRunningApps((cur) => {
+            cur.delete(event.app.path.absolute);
+            return cur;
+          });
+          setPfxsWithRunningApps((cur) => {
+            cur.delete(event.app.prefix.name);
+            return cur;
+          });
+
+          forceUpdate();
+          break;
+      }
+    }
+
+    return () => {
+      window.ipc.removeListener(IPC.AppEvent, onAppEvent);
+    };
+  }, []);
+
+  return [runningApps, pfxsWithRunningApps];
 }
 
 export default App;
