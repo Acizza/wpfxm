@@ -4,15 +4,18 @@ import * as fs from "fs";
 import * as path from "path";
 import * as process from "process";
 import * as os from "os";
-import { ipcMain, MessagePortMain } from "electron";
-import { IPC } from "../../../shared/ipc/event";
+import { ipcMain } from "electron";
+import { IPC, IPCSync } from "../../../shared/ipc/event";
 import {
   FoundApplications,
   ApplicationPath,
   LaunchOptions,
-  EventKind,
+  AppEvent,
+  SelectedApp,
+  maxAppEvents,
 } from "../../../shared/ipc/application";
 import { spawn, SpawnOptionsWithoutStdio } from "child_process";
+import { mainWindow } from "../../window";
 
 const applicationExt = ".exe";
 
@@ -117,12 +120,16 @@ function arrContainsIgnoreCase(arr: string[], value: string): boolean {
   return arr.some((x) => eqIgnoreCase(x, value));
 }
 
-function launch(opts: LaunchOptions, port: MessagePortMain): void {
+type AbsolutePath = string;
+
+const runningApps: Map<AbsolutePath, AppEvent[]> = new Map();
+
+function launch(opts: LaunchOptions): void {
   const wineExec = opts.force32Bit ? "wine" : "wine64";
 
   const spawnOpts: SpawnOptionsWithoutStdio = {
     env: {
-      WINEPREFIX: opts.prefix.path,
+      WINEPREFIX: opts.app.prefix.path,
       WINEARCH: opts.force32Bit ? "win32" : "win64",
       ...opts.env,
       ...process.env,
@@ -132,32 +139,60 @@ function launch(opts: LaunchOptions, port: MessagePortMain): void {
     windowsHide: true,
   };
 
-  const pc = spawn(wineExec, [opts.path, ...(opts.args || [])], spawnOpts);
+  const absPath = opts.app.path.absolute;
+  const pc = spawn(wineExec, [absPath, ...(opts.args || [])], spawnOpts);
+
+  if (!runningApps.has(absPath)) runningApps.set(absPath, []);
 
   function onData(data: Buffer | string) {
+    const appOutput = runningApps.get(absPath);
+
     data
       .toString()
       .split(os.EOL)
-      .map((line) => ({ kind: "data", data: line } as EventKind))
-      .forEach((msg) => port.postMessage(msg));
+      .filter((line) => line.length > 0)
+      .map((line) => ({ kind: "out", data: line } as AppEvent))
+      .forEach((msg) => {
+        if (appOutput) {
+          const slice =
+            appOutput.length > maxAppEvents
+              ? appOutput.slice(appOutput.length - maxAppEvents)
+              : appOutput;
+
+          slice.push(msg);
+        }
+        mainWindow().webContents.send(IPC.AppEvent, absPath, msg);
+      });
   }
 
   pc.stdout.on("data", onData);
   pc.stderr.on("data", onData);
 
-  pc.on("close", (code) => {
-    const reply: EventKind = {
-      kind: "closed",
-      success: code === 0,
+  pc.on("close", () => {
+    const reply: AppEvent = {
+      kind: "close",
+      prefix: opts.app.prefix,
     };
 
-    port.postMessage(reply);
+    const appOutput = runningApps.get(absPath);
+    if (appOutput) appOutput.push(reply);
+
+    mainWindow().webContents.send(IPC.AppEvent, absPath, reply);
   });
+
+  mainWindow().webContents.send(IPC.AppEvent, absPath, {
+    kind: "launch",
+    prefix: opts.app.prefix,
+  } as AppEvent);
 }
 
-ipcMain.on(IPC.LaunchProcess, (event, opts: LaunchOptions) => {
-  const [port] = event.ports;
-  launch(opts, port);
+ipcMain.on(IPC.LaunchProcess, (_, opts: LaunchOptions) => {
+  launch(opts);
+});
+
+ipcMain.on(IPCSync.GetAppEvents, (event, absPath: string) => {
+  const output: AppEvent[] | undefined = runningApps.get(absPath);
+  event.returnValue = output;
 });
 
 export default {};

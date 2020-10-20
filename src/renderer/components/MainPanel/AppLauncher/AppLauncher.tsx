@@ -1,71 +1,71 @@
-import React, { useMemo, useRef } from "react";
+import React, { CSSProperties, useEffect, useRef, useState } from "react";
 import { LaunchOptions, SelectedApp } from "../../../../shared/ipc/application";
 import { IPC } from "../../../../shared/ipc/event";
 import styles from "./AppLauncher.module.scss";
 import Header from "./Header";
-import OutputLog, { useOutputLogger } from "./OutputLog";
+import OutputLog, { useAppOutput } from "./OutputLog";
 
 interface AppLauncherProps {
   app?: SelectedApp;
 }
 
 const maxHeightPcnt = 40;
-const maxOutputLines = 500;
 
 function AppLauncher(props: AppLauncherProps): JSX.Element {
-  const [outputLines, setOutputPort] = useOutputLogger(maxOutputLines);
+  const outputEvents = useAppOutput(props.app);
+  const [style, setStyle] = useState<CSSProperties>({});
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const style = useMemo(() => {
-    const elem = panelRef.current;
-    let height: string | number = 0;
-
-    if (!elem || !elem.parentElement) return { height };
-
-    const parentHeight = elem.parentElement.scrollHeight;
-
-    if (props.app && parentHeight > 0) {
-      // We need to manually calculate the height of each child as simply using
-      // the element's scrollHeight will not take child elements with scrollbars into account
-      // properly
-      const childrenHeight = Array.from(elem.children).reduce(
-        (acc, child) => acc + child.scrollHeight,
-        0
-      );
-
-      const totalHeight = childrenHeight;
-
-      const pcnt = (totalHeight / parentHeight) * 100;
-      const value = Math.min(pcnt, maxHeightPcnt);
-      height = `${Math.round(value)}%`;
-    } else {
-      height = 0;
-    }
-
-    return { height };
-  }, [props.app, outputLines]);
+  // This effect calculates the height of the component.
+  // useMemo cannot be used here as we need this to run after a render.
+  useEffect(() => {
+    setStyle(elementHeight(panelRef.current, props.app !== undefined));
+  }, [props.app, outputEvents]);
 
   function launchApp() {
     if (!props.app) return;
 
-    const { port1, port2 } = new MessageChannel();
-
     const opts: LaunchOptions = {
-      prefix: props.app.prefix,
-      path: props.app.path.absolute,
+      app: props.app,
       force32Bit: false,
     };
 
-    window.ipc.postMessage(IPC.LaunchProcess, opts, [port1]);
-    setOutputPort(port2);
+    window.ipc.postMessage(IPC.LaunchProcess, opts, []);
   }
 
   return (
     <div className={styles.panel} ref={panelRef} style={style}>
       <Header onLaunchClicked={launchApp} />
-      {outputLines.length > 0 && <OutputLog lines={outputLines} />}
+      {outputEvents.length > 0 && <OutputLog events={outputEvents} />}
     </div>
   );
+}
+
+function elementHeight(
+  elem: HTMLElement | null,
+  canExpand: boolean
+): CSSProperties {
+  let height: string | number = 0;
+
+  if (!canExpand || !elem || !elem.parentElement) return { height };
+
+  const parentHeight = elem.parentElement.scrollHeight;
+
+  if (parentHeight === 0) return { height };
+
+  // We need to manually calculate the height of each child as simply using
+  // the element's scrollHeight will not take child elements with scrollbars into account
+  // properly
+  const childrenHeight = Array.from(elem.children).reduce(
+    (acc, child) => acc + child.scrollHeight,
+    0
+  );
+
+  const pcnt = (childrenHeight / parentHeight) * 100;
+  const value = Math.min(pcnt, maxHeightPcnt);
+  height = `${Math.round(value)}%`;
+
+  return { height };
 }
 
 export default AppLauncher;

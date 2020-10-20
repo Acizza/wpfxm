@@ -1,15 +1,25 @@
-import React, { useEffect, useState } from "react";
-import { EventKind } from "../../../../shared/ipc/application";
+import { IpcRendererEvent } from "electron";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  AppEvent,
+  maxAppEvents,
+  SelectedApp,
+} from "../../../../shared/ipc/application";
+import { IPC, IPCSync } from "../../../../shared/ipc/event";
 import styles from "./OutputLog.module.scss";
 
 interface OutputLogProps {
-  lines: Line[];
+  events: OutputEvent[];
 }
 
 export function OutputLog(props: OutputLogProps): JSX.Element {
-  const renderedLines = props.lines.map((line) => (
-    <span className={`line ${line.kind}`}>{line.data}</span>
-  ));
+  const renderedLines = useMemo(
+    () =>
+      props.events.map((line) => {
+        return <span className={`line ${line.classes}`}>{line.message}</span>;
+      }),
+    [props.events]
+  );
 
   return (
     <div className={styles.panel}>
@@ -18,63 +28,73 @@ export function OutputLog(props: OutputLogProps): JSX.Element {
   );
 }
 
-type OnMessage = (event: MessageEvent<EventKind>) => void;
-type SetPort = (port: MessagePort | undefined) => void;
+const enum OutputClasses {
+  Data = "data",
+  Launch = "special launch",
+  Closed = "special closed",
+}
 
-function useMessagePort(
-  onMessage: OnMessage
-): [MessagePort | undefined, SetPort] {
-  const [port, setPort] = useState<MessagePort | undefined>(undefined);
+interface OutputEvent {
+  classes: OutputClasses;
+  message: string;
+}
 
+export function useAppOutput(app?: SelectedApp): OutputEvent[] {
+  const [lines, setLines] = useState<OutputEvent[]>([]);
+
+  // This effect loads existing app events from the main process and starts monitoring for new ones
   useEffect(() => {
-    if (!port) return;
+    if (!app) return;
 
-    port.onmessage = onMessage;
+    const events: AppEvent[] = window.ipc.sendSync(
+      IPCSync.GetAppEvents,
+      app.path.absolute
+    );
+
+    const outputEvents = (events || [])
+      .map(appEventToOutput)
+      .filter((e) => e !== null) as OutputEvent[];
+
+    setLines(outputEvents);
+
+    window.ipc.on(IPC.AppEvent, onAppEvent);
 
     return () => {
-      port.onmessage = null;
-      port.close();
+      window.ipc.removeListener(IPC.AppEvent, onAppEvent);
     };
-  }, [port]);
+  }, [app]);
 
-  return [port, setPort];
-}
+  function onAppEvent(_: IpcRendererEvent, absPath: string, event: AppEvent) {
+    if (!app || absPath !== app.path.absolute) return;
 
-const enum LineKind {
-  Output = "output",
-  Closed = "closed",
-}
+    const output = appEventToOutput(event);
+    if (!output) return;
 
-interface Line {
-  kind: LineKind;
-  data: string;
-}
+    appendLine(output);
+  }
 
-export function useOutputLogger(maxLines: number): [Line[], SetPort] {
-  const [lines, setLines] = useState<Line[]>([]);
-  const [, setPort] = useMessagePort(onOutput);
+  function appEventToOutput(event: AppEvent): OutputEvent | null {
+    switch (event.kind) {
+      case "out":
+        return { classes: OutputClasses.Data, message: event.data };
+      case "launch":
+        return null;
+      case "close":
+        return {
+          classes: OutputClasses.Closed,
+          message: "--- Process Closed ---",
+        };
+    }
+  }
 
-  function appendLine(line: Line) {
+  function appendLine(line: OutputEvent) {
     setLines((cur) => {
-      const slice = cur.length > maxLines ? cur.slice(1) : cur;
+      const slice = cur.length > maxAppEvents ? cur.slice(1) : cur;
       return [...slice, line];
     });
   }
 
-  function onOutput(event: MessageEvent<EventKind>) {
-    const data = event.data;
-
-    switch (data.kind) {
-      case "data":
-        appendLine({ kind: LineKind.Output, data: data.data });
-        break;
-      case "closed":
-        appendLine({ kind: LineKind.Closed, data: "--- Process Closed ---" });
-        break;
-    }
-  }
-
-  return [lines, setPort];
+  return lines;
 }
 
 export default OutputLog;
