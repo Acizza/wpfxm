@@ -1,6 +1,5 @@
 @import "base";
 
-$list-hover-border-color: #1d556b;
 $list-hover-duration: 250ms;
 $list-selected-border-color: #1d6b3e;
 $list-hover-color: $hover-primary;
@@ -24,7 +23,7 @@ $list-border-side: left;
       margin: 0;
 
       .list-item {
-        @include border(left, $list-border-size, $list-hover-border-color);
+        @include border(left, $list-border-size, $dark-cyan);
         border-color: transparent;
         transition: background-color $list-hover-duration ease-in-out,
           border-color $list-hover-duration ease-in-out;
@@ -36,7 +35,7 @@ $list-border-side: left;
         overflow: hidden;
 
         &:hover:not(.item-selected) {
-          @include selectedItem($list-hover-border-color);
+          @include selectedItem($dark-cyan);
         }
 
         .text {
