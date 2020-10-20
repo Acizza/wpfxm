@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react";
 import { AppEvent } from "../../../shared/ipc/application";
 import { IPC } from "../../../shared/ipc/event";
 import { IPrefix } from "../../../shared/ipc/prefix";
+import { useForceUpdate } from "../../util";
 import GenericList from "../GenericList/GenericList";
 import styles from "./PrefixList.module.scss";
 
@@ -83,11 +84,6 @@ function Loading(): JSX.Element {
       <FontAwesomeIcon className={styles.loadIcon} icon={faCircleNotch} spin />
     </div>
   );
-}
-
-function useForceUpdate(): () => void {
-  const [, setTick] = useState(0);
-  return () => setTick((cur) => ++cur);
 }
 
 export default PrefixList;
