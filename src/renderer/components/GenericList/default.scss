@@ -1,16 +1,18 @@
 @import "base";
 
 $list-hover-duration: 250ms;
+$list-hover-color: #3f5c6828;
 $list-selected-border-color: #1d6b3e;
-$list-hover-color: $hover-primary;
-$list-highlight-border-color: #751981;
+$list-selected-hover-color: #2e503d28;
+$list-highlight-border-color: #797988;
+$list-highlight-hover-color: #54545f28;
 $list-item-padding: 0.6em 1em;
 $list-border-size: 0.12em;
 $list-border-side: left;
 
-@mixin selectedItem($border-primary) {
-  border-color: $border-primary;
-  background-color: $list-hover-color;
+@mixin selectedItem($border-color, $bg-color) {
+  border-color: $border-color;
+  background-color: $bg-color;
 }
 
 @mixin genericList() {
@@ -35,7 +37,7 @@ $list-border-side: left;
         overflow: hidden;
 
         &:hover:not(.item-selected) {
-          @include selectedItem($dark-cyan);
+          @include selectedItem($dark-cyan, $list-hover-color);
         }
 
         .text {
@@ -52,11 +54,17 @@ $list-border-side: left;
       }
 
       &.item-highlighted {
-        @include selectedItem($list-highlight-border-color);
+        @include selectedItem(
+          $list-highlight-border-color,
+          $list-highlight-hover-color
+        );
       }
 
       &.item-selected {
-        @include selectedItem($list-selected-border-color);
+        @include selectedItem(
+          $list-selected-border-color,
+          $list-selected-hover-color
+        );
       }
     }
   }
