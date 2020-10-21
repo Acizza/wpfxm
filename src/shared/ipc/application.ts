@@ -1,4 +1,4 @@
-import { IPrefix } from "./prefix";
+import { Prefix } from "./prefix";
 
 export const maxAppEvents = 500;
 
@@ -13,7 +13,7 @@ export interface ApplicationPath {
 }
 
 export interface Application {
-  prefix: IPrefix;
+  prefix: Prefix;
   path: ApplicationPath;
 }
 

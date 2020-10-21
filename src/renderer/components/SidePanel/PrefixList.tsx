@@ -1,15 +1,15 @@
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React from "react";
-import { IPrefix } from "../../../shared/ipc/prefix";
+import { Prefix } from "../../../shared/ipc/prefix";
 import GenericList from "../GenericList/GenericList";
 import styles from "./PrefixList.module.scss";
 
 interface PrefixListProps {
-  prefixes: IPrefix[];
+  prefixes: Prefix[];
   pfxsWithRunningApps: Set<string>;
   loading: boolean;
-  onPrefixSelected?(pfx: IPrefix, selected: boolean): void;
+  onPrefixSelected?(pfx: Prefix, selected: boolean): void;
 }
 
 function PrefixList(props: PrefixListProps): JSX.Element {

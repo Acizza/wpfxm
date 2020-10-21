@@ -6,7 +6,7 @@ import ErrorModal from "./ErrorModal";
 import Settings from "./Settings/Settings";
 import { ConfigContext, useGlobalConfig } from "../config";
 import { IPC } from "../../shared/ipc/event";
-import { IPrefix } from "../../shared/ipc/prefix";
+import { Prefix } from "../../shared/ipc/prefix";
 import { DisplayError, ErrorClosure } from "../types/error";
 import { AppEvent } from "../../shared/ipc/application";
 import { IpcRendererEvent } from "electron";
@@ -33,7 +33,7 @@ function App() {
   const cfgState = useGlobalConfig();
   const [error, setError] = useState<DisplayError | undefined>(undefined);
   const [panel, togglePanel, resetPanel] = usePanelToggle(Panel.MainPanel);
-  const [selPrefix, setSelPrefix] = useState<IPrefix | undefined>(undefined);
+  const [selPrefix, setSelPrefix] = useState<Prefix | undefined>(undefined);
   const scannedPfxs = useScannedPrefixes({
     initialPath: cfgState.config.prefixPath,
     onError,
@@ -44,7 +44,7 @@ function App() {
     setError(error);
   }
 
-  function onPrefixSelected(pfx: IPrefix, selected: boolean) {
+  function onPrefixSelected(pfx: Prefix, selected: boolean) {
     if (selected) {
       resetPanel();
       setSelPrefix(pfx);

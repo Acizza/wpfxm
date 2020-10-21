@@ -2,11 +2,11 @@ import { ipcMain } from "electron";
 import * as fs from "fs";
 import * as path from "path";
 import { IPC } from "../../../shared/ipc/event";
-import { IPrefix } from "../../../shared/ipc/prefix";
+import { Prefix } from "../../../shared/ipc/prefix";
 import { NormalizedPath } from "../../util";
 import "./application";
 
-async function allFromDir(dir: NormalizedPath): Promise<IPrefix[]> {
+async function allFromDir(dir: NormalizedPath): Promise<Prefix[]> {
   if (!dir.length) return [];
 
   const files = await fs.promises.readdir(dir.path);

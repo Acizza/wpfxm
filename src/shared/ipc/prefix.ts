@@ -1,4 +1,4 @@
-export interface IPrefix {
+export interface Prefix {
   name: string;
   path: string;
 }

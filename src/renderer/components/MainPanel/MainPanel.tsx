@@ -6,7 +6,7 @@ import {
   FoundApplications,
 } from "../../../shared/ipc/application";
 import { IPC } from "../../../shared/ipc/event";
-import { IPrefix } from "../../../shared/ipc/prefix";
+import { Prefix } from "../../../shared/ipc/prefix";
 import { ErrorClosure } from "../../types/error";
 import { RunningApps } from "../App";
 import AppSelector from "./AppSelector";
@@ -20,7 +20,7 @@ const errors = {
 };
 
 interface MainPanelProps {
-  selectedPrefix?: IPrefix;
+  selectedPrefix?: Prefix;
   runningApps: RunningApps;
   onError?: ErrorClosure;
 }

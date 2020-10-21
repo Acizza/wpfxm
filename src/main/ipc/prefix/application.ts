@@ -1,4 +1,4 @@
-import { IPrefix } from "../../../shared/ipc/prefix";
+import { Prefix } from "../../../shared/ipc/prefix";
 import { NormalizedPath } from "../../util";
 import * as fs from "fs";
 import * as path from "path";
@@ -19,7 +19,7 @@ import { mainWindow } from "../../window";
 
 const applicationExt = ".exe";
 
-async function scanApplications(prefix: IPrefix): Promise<FoundApplications> {
+async function scanApplications(prefix: Prefix): Promise<FoundApplications> {
   const pfxDir = new NormalizedPath(prefix.path);
   let { execs, dirs } = await filesWithExtension(pfxDir.path, applicationExt);
 
@@ -48,7 +48,7 @@ async function scanApplications(prefix: IPrefix): Promise<FoundApplications> {
   };
 }
 
-ipcMain.handle(IPC.ScanPrefixApps, (_, prefix: IPrefix) =>
+ipcMain.handle(IPC.ScanPrefixApps, (_, prefix: Prefix) =>
   scanApplications(prefix)
 );
 
@@ -182,7 +182,7 @@ function launch(opts: LaunchOptions): void {
 
   mainWindow().webContents.send(IPC.AppEvent, absPath, {
     kind: "launch",
-    app: opts.app
+    app: opts.app,
   } as AppEvent);
 }
 

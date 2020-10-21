@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ApplicationPath, Application } from "../../../shared/ipc/application";
-import { IPrefix } from "../../../shared/ipc/prefix";
+import { Prefix } from "../../../shared/ipc/prefix";
 import { RunningApps } from "../App";
 import GenericList from "../GenericList/GenericList";
 import AppLauncher from "./AppLauncher/AppLauncher";
@@ -9,7 +9,7 @@ import styles from "./AppSelector.module.scss";
 interface AppSelectorProps {
   apps: ApplicationPath[];
   runningApps: RunningApps;
-  selectedPrefix: IPrefix;
+  selectedPrefix: Prefix;
 }
 
 function AppSelector(props: AppSelectorProps): JSX.Element {

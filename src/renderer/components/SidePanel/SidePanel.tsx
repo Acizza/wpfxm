@@ -1,15 +1,15 @@
 import React from "react";
-import { IPrefix } from "../../../shared/ipc/prefix";
+import { Prefix } from "../../../shared/ipc/prefix";
 import Header from "./Header";
 import PrefixList from "./PrefixList";
 import styles from "./SidePanel.module.scss";
 
 interface SidePanelProps {
-  prefixes: IPrefix[];
+  prefixes: Prefix[];
   pfxsWithRunningApps: Set<string>;
   loading: boolean;
   onToggleSettings?: () => void;
-  onPrefixSelected?: (pfx: IPrefix, selected: boolean) => void;
+  onPrefixSelected?: (pfx: Prefix, selected: boolean) => void;
 }
 
 function SidePanel(props: SidePanelProps): JSX.Element {
