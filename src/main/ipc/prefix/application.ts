@@ -1,4 +1,4 @@
-import { Prefix } from "../../../shared/ipc/prefix";
+import { Prefix, PrefixArch } from "../../../shared/ipc/prefix";
 import { NormalizedPath } from "../../util";
 import * as fs from "fs";
 import * as path from "path";
@@ -11,7 +11,6 @@ import {
   ApplicationPath,
   LaunchOptions,
   AppEvent,
-  Application,
   maxAppEvents,
 } from "../../../shared/ipc/application";
 import { spawn, SpawnOptionsWithoutStdio } from "child_process";
@@ -125,14 +124,15 @@ type AbsolutePath = string;
 const runningApps: Map<AbsolutePath, AppEvent[]> = new Map();
 
 function launch(opts: LaunchOptions): void {
-  const wineExec = opts.force32Bit ? "wine" : "wine64";
+  const is32Bit = opts.force32Bit || opts.app.prefix.arch === PrefixArch.X32;
+  const wineExec = is32Bit ? "wine" : "wine64";
 
   const spawnOpts: SpawnOptionsWithoutStdio = {
     env: {
       WINEPREFIX: opts.app.prefix.path,
-      WINEARCH: opts.force32Bit ? "win32" : "win64",
-      ...opts.env,
+      WINEARCH: is32Bit ? "win32" : "win64",
       ...process.env,
+      ...opts.env,
     },
     stdio: "pipe",
     detached: true,
