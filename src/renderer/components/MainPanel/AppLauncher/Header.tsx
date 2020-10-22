@@ -1,3 +1,5 @@
+import { faPowerOff, faWrench } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React from "react";
 import styles from "./Header.module.scss";
 
@@ -8,8 +10,14 @@ interface HeaderProps {
 function Header(props: HeaderProps): JSX.Element {
   return (
     <div className={styles.panel}>
-      <button onClick={props.onLaunchClicked}>Launch</button>
-      <button>Edit</button>
+      <button onClick={props.onLaunchClicked}>
+        <FontAwesomeIcon icon={faPowerOff} className={styles.icon} />
+        Launch
+      </button>
+      <button>
+        <FontAwesomeIcon icon={faWrench} className={styles.icon} />
+        Edit
+      </button>
     </div>
   );
 }
