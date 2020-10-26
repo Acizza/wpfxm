@@ -1,24 +1,59 @@
-import { faPowerOff, faWrench } from "@fortawesome/free-solid-svg-icons";
+import {
+  faPowerOff,
+  faTimes,
+  faWrench,
+  IconDefinition,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React from "react";
 import styles from "./Header.module.scss";
 
 interface HeaderProps {
   onLaunchClicked?(): void;
+  onCloseClicked?(): void;
+  disabled: boolean;
+  showLaunchButton: boolean;
 }
 
 function Header(props: HeaderProps): JSX.Element {
+  const launchToggleBtn = props.showLaunchButton ? (
+    <ButtonWithIcon
+      icon={faPowerOff}
+      label="Launch"
+      onClick={props.onLaunchClicked}
+      disabled={props.disabled}
+    />
+  ) : (
+    <ButtonWithIcon
+      icon={faTimes}
+      label="Close"
+      onClick={props.onCloseClicked}
+      disabled={props.disabled}
+    />
+  );
+
   return (
     <div className={styles.panel}>
-      <button onClick={props.onLaunchClicked}>
-        <FontAwesomeIcon icon={faPowerOff} className={styles.icon} />
-        Launch
-      </button>
-      <button>
-        <FontAwesomeIcon icon={faWrench} className={styles.icon} />
-        Edit
-      </button>
+      {launchToggleBtn}
+      <ButtonWithIcon icon={faWrench} label="Edit" />
     </div>
+  );
+}
+
+interface ButtonWithIconProps {
+  icon: IconDefinition;
+  label: string;
+  [prop: string]: any;
+}
+
+function ButtonWithIcon(props: ButtonWithIconProps): JSX.Element {
+  const { icon, label, ...rest } = props;
+
+  return (
+    <button {...rest}>
+      <FontAwesomeIcon icon={icon} className={styles.buttonIcon} />
+      {label}
+    </button>
   );
 }
 

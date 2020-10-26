@@ -16,7 +16,10 @@ export function OutputLog(props: OutputLogProps): JSX.Element {
   const renderedLines = useMemo(
     () =>
       props.events.map((line) => {
-        return <span className={`line ${line.classes}`}>{line.message}</span>;
+        const classes =
+          line.kind !== OutputKind.Data ? `special ${line.kind}` : line.kind;
+
+        return <span className={`line ${classes}`}>{line.message}</span>;
       }),
     [props.events]
   );
@@ -28,18 +31,21 @@ export function OutputLog(props: OutputLogProps): JSX.Element {
   );
 }
 
-const enum OutputClasses {
+const enum OutputKind {
   Data = "data",
-  Launch = "special launch",
-  Closed = "special closed",
+  Launch = "launch",
+  Closed = "closed",
+  Error = "error",
 }
 
 interface OutputEvent {
-  classes: OutputClasses;
+  kind: OutputKind;
   message: string;
 }
 
-export function useAppOutput(app?: Application): OutputEvent[] {
+type AppendError = (message: string) => void;
+
+export function useAppOutput(app?: Application): [OutputEvent[], AppendError] {
   const [lines, setLines] = useState<OutputEvent[]>([]);
 
   // This effect loads existing app events from the main process and starts monitoring for new ones
@@ -70,31 +76,38 @@ export function useAppOutput(app?: Application): OutputEvent[] {
     const output = appEventToOutput(event);
     if (!output) return;
 
-    appendLine(output);
+    appendEvent(output);
   }
 
   function appEventToOutput(event: AppEvent): OutputEvent | null {
     switch (event.kind) {
       case "out":
-        return { classes: OutputClasses.Data, message: event.data };
+        return { kind: OutputKind.Data, message: event.data };
       case "launch":
         return null;
       case "close":
         return {
-          classes: OutputClasses.Closed,
+          kind: OutputKind.Closed,
           message: "--- Process Closed ---",
         };
     }
   }
 
-  function appendLine(line: OutputEvent) {
+  function appendEvent(line: OutputEvent) {
     setLines((cur) => {
       const slice = cur.length > maxAppEvents ? cur.slice(1) : cur;
       return [...slice, line];
     });
   }
 
-  return lines;
+  function appendError(message: string) {
+    appendEvent({
+      kind: OutputKind.Error,
+      message: `--- Error: ${message} ---`,
+    });
+  }
+
+  return [lines, appendError];
 }
 
 export default OutputLog;

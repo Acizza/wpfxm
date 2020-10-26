@@ -43,7 +43,7 @@ function AppSelector(props: AppSelectorProps): JSX.Element {
           onItemSelected={onAppSelected}
         />
       </div>
-      <AppLauncher app={selApp} />
+      <AppLauncher app={selApp} runningApps={props.runningApps} />
     </React.Fragment>
   );
 }

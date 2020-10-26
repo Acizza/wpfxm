@@ -33,6 +33,10 @@
         &.closed {
           color: $light-cyan;
         }
+
+        &.error {
+          color: $error-text;
+        }
       }
     }
   }

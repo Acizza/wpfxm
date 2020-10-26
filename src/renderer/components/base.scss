@@ -16,9 +16,13 @@ $scrollbar-thumb-color: #32363f;
 
 $error-primary: #581414e0;
 $error-secondary: #991b1be0;
+$error-text: #c42626;
 
 $focus-primary: #35323a;
 $focus-secondary: #45434d;
+
+$disabled-primary: #27262c;
+$disabled-secondary: #76767e;
 
 $light-cyan: #4d789b;
 $dark-cyan: #1d556b;
@@ -92,5 +96,10 @@ button {
   &:hover {
     background-color: $focus-primary;
     color: $text-primary;
+  }
+
+  &:disabled {
+    background-color: $disabled-primary;
+    color: $disabled-secondary;
   }
 }

@@ -13,7 +13,7 @@ import {
   AppEvent,
   maxAppEvents,
 } from "../../../shared/ipc/application";
-import { spawn, SpawnOptionsWithoutStdio } from "child_process";
+import { ChildProcess, spawn, SpawnOptionsWithoutStdio } from "child_process";
 import { mainWindow } from "../../window";
 
 const applicationExt = ".exe";
@@ -119,9 +119,14 @@ function arrContainsIgnoreCase(arr: string[], value: string): boolean {
   return arr.some((x) => eqIgnoreCase(x, value));
 }
 
+interface TrackedApp {
+  process: ChildProcess;
+  events: AppEvent[];
+}
+
 type AbsolutePath = string;
 
-const runningApps: Map<AbsolutePath, AppEvent[]> = new Map();
+const runningApps: Map<AbsolutePath, TrackedApp> = new Map();
 
 function launch(opts: LaunchOptions): void {
   const is32Bit = opts.force32Bit || opts.app.prefix.arch === PrefixArch.X32;
@@ -142,10 +147,13 @@ function launch(opts: LaunchOptions): void {
   const absPath = opts.app.path.absolute;
   const pc = spawn(wineExec, [absPath, ...(opts.args || [])], spawnOpts);
 
-  if (!runningApps.has(absPath)) runningApps.set(absPath, []);
+  runningApps.set(absPath, {
+    process: pc,
+    events: runningApps.get(absPath)?.events || [],
+  });
 
   function onData(data: Buffer | string) {
-    const appOutput = runningApps.get(absPath);
+    const runningApp = runningApps.get(absPath);
 
     data
       .toString()
@@ -153,11 +161,12 @@ function launch(opts: LaunchOptions): void {
       .filter((line) => line.length > 0)
       .map((line) => ({ kind: "out", data: line } as AppEvent))
       .forEach((msg) => {
-        if (appOutput) {
+        if (runningApp) {
+          const output = runningApp.events;
           const slice =
-            appOutput.length > maxAppEvents
-              ? appOutput.slice(appOutput.length - maxAppEvents)
-              : appOutput;
+            output.length > maxAppEvents
+              ? output.slice(output.length - maxAppEvents)
+              : output;
 
           slice.push(msg);
         }
@@ -174,8 +183,8 @@ function launch(opts: LaunchOptions): void {
       app: opts.app,
     };
 
-    const appOutput = runningApps.get(absPath);
-    if (appOutput) appOutput.push(reply);
+    const runningApp = runningApps.get(absPath);
+    if (runningApp) runningApp.events.push(reply);
 
     mainWindow().webContents.send(IPC.AppEvent, absPath, reply);
   });
@@ -186,12 +195,24 @@ function launch(opts: LaunchOptions): void {
   } as AppEvent);
 }
 
-ipcMain.on(IPC.LaunchProcess, (_, opts: LaunchOptions) => {
-  launch(opts);
+ipcMain.handle(IPC.LaunchApp, (_, opts: LaunchOptions) => launch(opts));
+
+ipcMain.handle(IPC.CloseApp, (_, absPath: string) => {
+  const running = runningApps.get(absPath);
+  if (!running) return;
+
+  if (!running.process.kill()) return false;
+
+  return new Promise((resolve) =>
+    running.process.on("close", (code) => {
+      const success = code === null || code === 0;
+      resolve(success);
+    })
+  );
 });
 
 ipcMain.on(IPCSync.GetAppEvents, (event, absPath: string) => {
-  const output: AppEvent[] | undefined = runningApps.get(absPath);
+  const output: AppEvent[] | undefined = runningApps.get(absPath)?.events;
   event.returnValue = output;
 });
 
